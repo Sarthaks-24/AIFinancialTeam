@@ -541,3 +541,26 @@ class FinancialUploadAPIView(APIView):
             },
             status=status.HTTP_201_CREATED
         )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def reconcile_view(request):
+    """Run the AI reconciliation engine over settlement + ledger data."""
+    from .services.reconciliation_service import run_reconciliation
+
+    try:
+        result = run_reconciliation()
+        return Response(result)
+    except FileNotFoundError:
+        return Response(
+            {"error": "Reconciliation data files not found. Run generate_synthetic_data.py first."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as exc:
+        logger.exception("Reconciliation failed: %s", exc)
+        return Response(
+            {"error": "Reconciliation engine encountered an error."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+

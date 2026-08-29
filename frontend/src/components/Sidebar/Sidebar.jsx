@@ -19,6 +19,7 @@ import SmartToyIcon from "@mui/icons-material/SmartToyOutlined";
 import HistoryIcon from "@mui/icons-material/HistoryOutlined";
 import SettingsIcon from "@mui/icons-material/SettingsOutlined";
 import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
+import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 
 import { Link, useLocation } from "react-router-dom";
 
@@ -30,10 +31,10 @@ const menu = [
   { text: "Reports", path: "/reports", icon: <DescriptionIcon /> },
   { text: "Tasks", path: "/tasks", icon: <TaskIcon /> },
   { text: "Talk", path: "/talk", icon: <SmartToyIcon /> },
+  { text: "Reconciliation", path: "/reconciliation", icon: <CompareArrowsIcon /> },
   { text: "History", path: "/history", icon: <HistoryIcon /> },
   { text: "Financial Data", path: "/financial-data", icon: <CurrencyRupeeIcon /> },
   { text: "Settings", path: "/settings", icon: <SettingsIcon /> },
-  
 ];
 
 function SidebarContent({ onNavigate }) {

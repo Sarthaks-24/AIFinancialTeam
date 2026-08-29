@@ -12,6 +12,7 @@ from .views import (
     history_view,
     kpi_view,
     query_history,
+    reconcile_view,
     report_view,
     specialist_list,
     task_list,
@@ -38,4 +39,5 @@ urlpatterns = [
     path("financial-data/", financial_data_view),
     path("financial-data/months/", financial_months_view),
     path("upload/", FinancialUploadAPIView.as_view(), name="upload-financial-data"),
+    path("reconcile/", reconcile_view),
 ]

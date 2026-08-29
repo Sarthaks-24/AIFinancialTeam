@@ -14,6 +14,7 @@ import Chat from "./pages/Chat";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import FinanceData from "./pages/FinanceData";
+import Reconciliation from "./pages/Reconciliation";
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
             <Route path="talk" element={<Chat />} />
             <Route path="history" element={<History />} />
             <Route path="financial-data" element={<FinanceData />} />
+            <Route path="reconciliation" element={<Reconciliation />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 
