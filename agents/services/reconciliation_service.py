@@ -191,7 +191,10 @@ def _deterministic_match(settlements: pd.DataFrame, ledger: pd.DataFrame):
 def _ai_classify_exceptions(unresolved: list[dict]) -> list[dict]:
     """
     Send unresolved rows to Gemini for classification and reasoning.
-    Returns enriched exception dicts with ai_reasoning.
+    Returns enriched exception dicts with ai_reasoning, classification_source, and confidence.
+    
+    Classification source: "deterministic" (validation errors, duplicates) or "ai" (Gemini)
+    Confidence: float 0-1 for AI-classified items, None for deterministic
     """
     if not unresolved:
         return []
@@ -214,11 +217,12 @@ def _ai_classify_exceptions(unresolved: list[dict]) -> list[dict]:
         "amount_mismatch, date_mismatch, missing_in_ledger, missing_in_settlement, unresolvable. "
         "Compare settlement_date with ledger_date explicitly: when the transaction ID and amount "
         "match but the dates differ, classify it as date_mismatch. "
-        "For each, provide a short reasoning explaining the discrepancy.\n\n"
+        "For each, provide a short reasoning and a confidence score (0.0 to 1.0, where 1.0 is very confident).\n\n"
         "Return your response as a JSON array with objects having keys: "
-        "txn_id, type, reasoning.\n"
+        "txn_id, type, reasoning, confidence.\n"
         "Example: [{\"txn_id\": \"rzp_txn_0001\", \"type\": \"amount_mismatch\", "
-        "\"reasoning\": \"Settlement shows ₹15,000 but ledger records ₹14,500 — ₹500 delta likely fee adjustment.\"}]\n\n"
+        "\"reasoning\": \"Settlement shows ₹15,000 but ledger records ₹14,500 — ₹500 delta likely fee adjustment.\", "
+        "\"confidence\": 0.92}]\n\n"
         "Return ONLY the JSON array, no markdown fences, no extra text."
     )
 
@@ -230,7 +234,8 @@ def _ai_classify_exceptions(unresolved: list[dict]) -> list[dict]:
             persona_prompt=(
                 "You are Nova, a precise financial reconciliation specialist. "
                 "You match Razorpay payment settlements against internal accounting records. "
-                "Be exact with numbers. Classify discrepancies honestly."
+                "Be exact with numbers. Classify discrepancies honestly. "
+                "Be conservative with confidence: only assign high confidence (>0.8) when the classification is certain."
             ),
             max_output_tokens=2000,
         )
@@ -253,16 +258,26 @@ def _ai_classify_exceptions(unresolved: list[dict]) -> list[dict]:
     enriched = []
     for row in unresolved:
         ai = ai_lookup.get(row["txn_id"], {})
+        
+        # Determine if this was deterministically classified (validation error, duplicate) or AI-classified
+        is_deterministic = row.get("validation_reason") is not None
+        classification_source = "deterministic" if is_deterministic else "ai"
+        confidence = None if is_deterministic else ai.get("confidence", 0.5)
+        
         enriched.append({
             "txn_id": row["txn_id"],
             "type": ai.get("type", row["hint"]),
             "settlement_amount": row["settlement_amount"],
             "ledger_amount": row["ledger_amount"],
+            "settlement_date": row["settlement_date"],
+            "ledger_date": row["ledger_date"],
             "delta": row["delta"],
             "ai_reasoning": ai.get(
                 "reasoning",
                 row.get("validation_reason") or f"Classified as {row['hint']} by deterministic check.",
             ),
+            "classification_source": classification_source,
+            "confidence": confidence,
         })
 
     return enriched
@@ -439,8 +454,11 @@ def run_reconciliation(organization=None, data_dir=DATA_DIR, dataset_name="canon
             confidence=e.get("confidence"),
             settlement_amount=e.get("settlement_amount"),
             ledger_amount=e.get("ledger_amount"),
+            settlement_date=e.get("settlement_date"),
+            ledger_date=e.get("ledger_date"),
             delta=e.get("delta"),
             ai_reasoning=e.get("ai_reasoning", ""),
+            classification_source=e.get("classification_source", "ai"),
             ground_truth_type=gtype,
             is_correct=(ptype == gtype)
         ))

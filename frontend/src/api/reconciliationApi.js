@@ -1,7 +1,7 @@
 import api from "./api";
 
-export const runReconciliation = async () => {
-  const response = await api.post("reconcile/");
+export const runReconciliation = async (dataset_name = "canonical_60") => {
+  const response = await api.post("reconcile/", { dataset_name });
   return response.data;
 };
 

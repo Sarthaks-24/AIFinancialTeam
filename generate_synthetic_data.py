@@ -1,65 +1,33 @@
 """
 Synthetic Data Generator for Reconciliation Engine
-===================================================
-Creates two CSV files simulating:
-  1. Razorpay settlement export  (razorpay_settlements.csv)
-  2. Internal company ledger     (internal_ledger.csv)
-
-Intentionally injects 8-12 discrepancies for the AI reconciliation
-engine to detect: amount mismatches, missing records, date offsets.
-
 Usage:
-    python generate_synthetic_data.py
+    python generate_synthetic_data.py --batch canonical_60
+    python generate_synthetic_data.py --batch stress_220
+    python generate_synthetic_data.py --batch stress_280
+    python generate_synthetic_data.py --batch all
 """
-
+import argparse
 import csv
 import json
 import os
 import random
 from datetime import datetime, timedelta
 
-OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reconciliation_data")
-
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
-NUM_RECORDS = 60
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reconciliation_data")
 BASE_DATE = datetime(2026, 7, 1)
 CATEGORIES = [
     "Product Sale", "Service Fee", "Subscription", "Refund Reversal",
     "License Fee", "Consulting", "Maintenance", "Support Contract",
 ]
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def _txn_id(i: int) -> str:
-    return f"rzp_txn_{i:04d}"
-
-
-def _order_id(i: int) -> str:
-    return f"order_{i:04d}"
-
-
-def _entry_id(i: int) -> str:
-    return f"LED_{i:04d}"
-
-
+def _txn_id(i: int) -> str: return f"rzp_txn_{i:04d}"
+def _order_id(i: int) -> str: return f"order_{i:04d}"
+def _entry_id(i: int) -> str: return f"LED_{i:04d}"
 def _random_date(base: datetime, spread_days: int = 60) -> datetime:
     return base + timedelta(days=random.randint(0, spread_days))
-
-
-def _random_amount() -> float:
-    return round(random.uniform(500, 75000), 2)
-
-
-# ---------------------------------------------------------------------------
-# Generate matched base records
-# ---------------------------------------------------------------------------
+def _random_amount() -> float: return round(random.uniform(500, 75000), 2)
 
 def generate_base_records(n: int):
-    """Return a list of dicts representing 'ground truth' transactions."""
     records = []
     for i in range(1, n + 1):
         date = _random_date(BASE_DATE)
@@ -80,50 +48,53 @@ def generate_base_records(n: int):
         })
     return records
 
-
-# ---------------------------------------------------------------------------
-# Inject discrepancies
-# ---------------------------------------------------------------------------
-
-def inject_discrepancies(records: list):
-    """
-    Mutate a subset of records to create reconciliation exceptions.
-    Returns a mapping of index -> discrepancy type for verification.
-    """
+def inject_discrepancies(records: list, num_discrepancies: int):
     indices = list(range(len(records)))
     random.shuffle(indices)
-
-    # Pick 10 records for discrepancies
-    targets = indices[:10]
+    targets = indices[:num_discrepancies]
     discrepancy_map = {}
+    
+    parts = 6
+    chunk = num_discrepancies // parts
+    
+    # 1. Amount mismatches
+    for idx in targets[:chunk]:
+        drift = round(random.uniform(5, 500), 2) * random.choice([1, -1])
+        records[idx]["ledger_amount_override"] = round(records[idx]["amount"] + drift, 2)
+        discrepancy_map[records[idx]["index"]] = "amount_mismatch"
+        
+    # 2. Missing in ledger
+    for idx in targets[chunk:2*chunk]:
+        records[idx]["skip_ledger"] = True
+        discrepancy_map[records[idx]["index"]] = "missing_in_ledger"
+        
+    # 3. Missing in settlement
+    for idx in targets[2*chunk:3*chunk]:
+        records[idx]["skip_settlement"] = True
+        discrepancy_map[records[idx]["index"]] = "missing_in_settlement"
+        
+    # 4. Date mismatches
+    for idx in targets[3*chunk:4*chunk]:
+        records[idx]["ledger_date_override"] = records[idx]["date"] + timedelta(days=random.randint(4, 12))
+        discrepancy_map[records[idx]["index"]] = "date_mismatch"
 
-    # 3 amount mismatches
-    for idx in targets[:3]:
+    # 5. Duplicate references (Ledger has duplicate)
+    for idx in targets[4*chunk:5*chunk]:
+        records[idx]["duplicate_ledger"] = True
+        discrepancy_map[records[idx]["index"]] = "unresolvable"
+        
+    # 6. Invalid inputs (missing amount in settlement)
+    for idx in targets[5*chunk:]:
+        records[idx]["invalid_settlement"] = True
+        discrepancy_map[records[idx]["index"]] = "unresolvable"
+
+    # Any remaining will be amount mismatches (remainder handling)
+    for idx in targets[6*chunk:]:
         drift = round(random.uniform(5, 500), 2) * random.choice([1, -1])
         records[idx]["ledger_amount_override"] = round(records[idx]["amount"] + drift, 2)
         discrepancy_map[records[idx]["index"]] = "amount_mismatch"
 
-    # 3 missing from ledger (settlement exists, ledger doesn't)
-    for idx in targets[3:6]:
-        records[idx]["skip_ledger"] = True
-        discrepancy_map[records[idx]["index"]] = "missing_in_ledger"
-
-    # 2 missing from settlement (ledger exists, settlement doesn't)
-    for idx in targets[6:8]:
-        records[idx]["skip_settlement"] = True
-        discrepancy_map[records[idx]["index"]] = "missing_in_settlement"
-
-    # 2 date mismatches (>3 day offset)
-    for idx in targets[8:10]:
-        records[idx]["ledger_date_override"] = records[idx]["date"] + timedelta(days=random.randint(4, 12))
-        discrepancy_map[records[idx]["index"]] = "date_mismatch"
-
     return discrepancy_map
-
-
-# ---------------------------------------------------------------------------
-# Write CSVs
-# ---------------------------------------------------------------------------
 
 def write_settlements_csv(records: list, path: str):
     fieldnames = ["txn_id", "order_id", "amount", "fee", "tax", "net_amount", "settled_at", "merchant_ref"]
@@ -133,7 +104,7 @@ def write_settlements_csv(records: list, path: str):
         for rec in records:
             if rec.get("skip_settlement"):
                 continue
-            writer.writerow({
+            row = {
                 "txn_id": rec["txn_id"],
                 "order_id": rec["order_id"],
                 "amount": f'{rec["amount"]:.2f}',
@@ -142,8 +113,10 @@ def write_settlements_csv(records: list, path: str):
                 "net_amount": f'{rec["net_amount"]:.2f}',
                 "settled_at": rec["date"].strftime("%Y-%m-%d"),
                 "merchant_ref": f'MR-{rec["order_id"].upper()}',
-            })
-
+            }
+            if rec.get("invalid_settlement"):
+                row["amount"] = ""
+            writer.writerow(row)
 
 def write_ledger_csv(records: list, path: str):
     fieldnames = ["entry_id", "reference", "amount", "date", "category", "notes"]
@@ -157,36 +130,35 @@ def write_ledger_csv(records: list, path: str):
             amount = rec.get("ledger_amount_override", rec["amount"])
             date = rec.get("ledger_date_override", rec["date"])
 
-            writer.writerow({
+            row = {
                 "entry_id": _entry_id(rec["index"]),
                 "reference": rec["txn_id"],
                 "amount": f"{amount:.2f}",
                 "date": date.strftime("%Y-%m-%d"),
                 "category": rec["category"],
                 "notes": f"Payment received for {rec['order_id']}",
-            })
+            }
+            writer.writerow(row)
+            if rec.get("duplicate_ledger"):
+                row["entry_id"] = _entry_id(rec["index"]) + "_DUP"
+                writer.writerow(row)
 
+def build_dataset(name: str, num_records: int, num_discrepancies: int):
+    output_dir = os.path.join(DATA_DIR, name)
+    os.makedirs(output_dir, exist_ok=True)
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
+    records = generate_base_records(num_records)
+    discrepancy_map = inject_discrepancies(records, num_discrepancies)
 
-def main():
-    random.seed(42)  # Reproducible output
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-    records = generate_base_records(NUM_RECORDS)
-    discrepancy_map = inject_discrepancies(records)
-
-    settlements_path = os.path.join(OUTPUT_DIR, "razorpay_settlements.csv")
-    ledger_path = os.path.join(OUTPUT_DIR, "internal_ledger.csv")
+    settlements_path = os.path.join(output_dir, "razorpay_settlements.csv")
+    ledger_path = os.path.join(output_dir, "internal_ledger.csv")
 
     write_settlements_csv(records, settlements_path)
     write_ledger_csv(records, ledger_path)
 
-    # Build and write ground truth JSON
     ground_truth = {
-        "total_records": NUM_RECORDS,
+        "dataset": name,
+        "total_records": num_records,
         "discrepancies": {}
     }
     for rec in records:
@@ -195,26 +167,30 @@ def main():
         dtype = discrepancy_map.get(idx, "matched")
         ground_truth["discrepancies"][txn_id] = dtype
         
-    gt_path = os.path.join(OUTPUT_DIR, "ground_truth.json")
+    gt_path = os.path.join(output_dir, "ground_truth.json")
     with open(gt_path, "w", encoding="utf-8") as f:
         json.dump(ground_truth, f, indent=2)
+        
+    print(f"Generated dataset '{name}': {num_records} records, {len(discrepancy_map)} discrepancies")
 
-    # Count actual rows written
-    settlement_count = sum(1 for r in records if not r.get("skip_settlement"))
-    ledger_count = sum(1 for r in records if not r.get("skip_ledger"))
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--batch", default="canonical_60", help="Dataset name or 'all'")
+    args = parser.parse_args()
+    random.seed(42)
 
-    print("=" * 60)
-    print("  Synthetic Reconciliation Data Generated")
-    print("=" * 60)
-    print(f"  Settlements CSV : {settlements_path}")
-    print(f"    → {settlement_count} records")
-    print(f"  Ledger CSV      : {ledger_path}")
-    print(f"    → {ledger_count} records")
-    print(f"  Discrepancies   : {len(discrepancy_map)} injected")
-    for idx, dtype in sorted(discrepancy_map.items()):
-        print(f"    record {idx:3d} → {dtype}")
-    print("=" * 60)
+    configs = {
+        "canonical_60": (60, 10),
+        "stress_220": (220, 30),
+        "stress_280": (280, 45),
+    }
 
+    if args.batch == "all":
+        for name, params in configs.items():
+            build_dataset(name, params[0], params[1])
+    else:
+        params = configs.get(args.batch, (60, 10))
+        build_dataset(args.batch, params[0], params[1])
 
 if __name__ == "__main__":
     main()

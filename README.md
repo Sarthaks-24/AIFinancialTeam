@@ -1,15 +1,37 @@
 # AI-Financial-Team: Track 04 (AI Finance Controller)
 
-AI-Financial-Team is a powerful, multi-agent AI financial workforce engineered specifically to solve the manual bottleneck of financial reconciliation and settlement forecasting.
+AI-Financial-Team is an intelligent financial reconciliation system built specifically for the **Razorpay AI Buildathon (Track 04: AI Finance Controller)**.
 
-Built for the **Razorpay AI Buildathon (Track 04: AI Finance Controller)**, this system runs the books and matches a large batch of synthetic data (Razorpay settlements vs Internal Ledger), reporting its accuracy and surfacing an honest exception list.
+## 🏆 Track 04: Closing the Finance-Ops Loop
 
-## 🏆 Tackling Track 04: The Bar
-The 2026 builder consensus is that *verification capacity*, not generation speed, is the bottleneck. The Track 04 "bar" demands: **Throughput plus measured accuracy plus an honest exception list.** Here is how we meet it:
+The Track 04 challenge requires building an agent that **closes one finance-ops loop across a 50+ record batch of synthetic data, reporting its match rate and the exceptions it could not resolve.**
 
-1. **Measured Accuracy (Precision/Recall/F1)**: Our system doesn't just guess. It compares its AI classifications against a deterministic "ground truth" manifest generated alongside the synthetic data, computes overall and per-category metrics at runtime, and persists the overall F1 score.
-2. **Honest Exception List**: Discrepancies and fallback classifications are surfaced directly on the dashboard for review. The engine does not force a match when the input is ambiguous or invalid.
-3. **Persistent Audit Trail**: Every reconciliation run, overall F1 score, and AI rationale is persisted securely to a Postgres database, viewable via the Run History UI. Per-category metrics are computed at runtime.
+**This system meets the Track 04 evaluation bar with:**
+
+1. **Throughput & Accuracy** — Processes batches of 60+ records with deterministic + AI classification, returning measured precision/recall/F1 scores
+2. **Honest Exception List** — All unresolved discrepancies surface directly with classification reasoning, confidence scores, and audit trail
+3. **Measurable Performance** — No fabricated metrics; accuracy is compared against generated ground truth; exceptions that resist classification are labeled "unresolvable"
+
+## 🔄 The Finance Reconciliation Workflow
+
+```
+Razorpay Settlement Data + Internal Ledger
+    ↓
+Deterministic Matching (txn_id + amount + date)
+    ↓
+Unmatched Records → Gemini Classification
+    ↓
+Exception Report with Confidence Scores
+    ↓
+Accuracy Evaluation (Precision / Recall / F1)
+    ↓
+Persistent Audit Trail
+```
+
+### The Core Promise
+- **Deterministic engine** handles exact matches — ensuring financial correctness is never delegated to the LLM
+- **AI classification** resolves ambiguous cases — date offsets, amount mismatches, missing records — with explicit reasoning
+- **Honest failure modes** — records that cannot be confidently classified remain marked as exceptions for manual review
 
 ## 🏗️ Architecture
 The reconciliation capability is an AI-assisted finance-ops engine exposed through the same Django API and Nexus routing path as the rest of the application. The registered `Ledger` specialist uses the platform's Gemini integration: a deterministic matching engine catches exact matches, unresolved rows are classified by Gemini through the existing AI service, and Gemini produces an executive summary. Nexus loads and writes Ledger conversation turns through Echo. `POST /api/ask/` with Ledger and `POST /api/reconcile/` are two entry points to the same engine: the former provides conversational specialist routing, while the latter supports the dashboard's direct batch workflow, so neither is redundant.

@@ -17,6 +17,10 @@ import {
   Alert,
   Divider,
   Pagination,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -57,6 +61,7 @@ export default function Reconciliation() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [dataset, setDataset] = useState("canonical_60");
 
   const [history, setHistory] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -83,7 +88,7 @@ export default function Reconciliation() {
     setError(null);
     setData(null);
     try {
-      const result = await runReconciliation();
+      const result = await runReconciliation(dataset);
       setData(result);
       fetchHistory(1); // Refresh history after run
       setPage(1);
@@ -130,28 +135,43 @@ export default function Reconciliation() {
             Match Razorpay settlements against internal ledger records using AI
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={
-            loading ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              <PlayArrowIcon />
-            )
-          }
-          onClick={handleRun}
-          disabled={loading}
-          sx={{
-            px: 4,
-            py: 1.5,
-            fontWeight: 700,
-            textTransform: "none",
-            fontSize: 16,
-          }}
-        >
-          {loading ? "Running…" : "Run Reconciliation"}
-        </Button>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Dataset</InputLabel>
+            <Select
+              value={dataset}
+              label="Dataset"
+              onChange={(e) => setDataset(e.target.value)}
+              disabled={loading}
+            >
+              <MenuItem value="canonical_60">Canonical (60)</MenuItem>
+              <MenuItem value="stress_220">Stress Test (220)</MenuItem>
+              <MenuItem value="stress_280">Stress Test (280)</MenuItem>
+            </Select>
+          </FormControl>
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={
+              loading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <PlayArrowIcon />
+              )
+            }
+            onClick={handleRun}
+            disabled={loading}
+            sx={{
+              px: 4,
+              py: 1.5,
+              fontWeight: 700,
+              textTransform: "none",
+              fontSize: 16,
+            }}
+          >
+            {loading ? "Running…" : "Run Reconciliation"}
+          </Button>
+        </Stack>
       </Stack>
 
       {error && (
@@ -395,20 +415,30 @@ export default function Reconciliation() {
           {data.exceptions?.length > 0 && (
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" mb={2}>
-                Exception List ({data.exceptions.length})
+                Exception List ({data.exceptions.length}) 
+                <Typography component="span" variant="caption" sx={{ ml: 1, color: 'text.secondary' }}>
+                  — Unresolved records requiring investigation
+                </Typography>
               </Typography>
               <TableContainer>
                 <Table size="small">
                   <TableHead>
-                    <TableRow>
+                    <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                       <TableCell sx={{ fontWeight: 700 }}>Txn ID</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Source</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Confidence</TableCell>
                       <TableCell sx={{ fontWeight: 700 }} align="right">
                         Settlement Amt
                       </TableCell>
                       <TableCell sx={{ fontWeight: 700 }} align="right">
                         Ledger Amt
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }} align="right">
+                        Settle Date
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }} align="right">
+                        Ledger Date
                       </TableCell>
                       <TableCell sx={{ fontWeight: 700 }} align="right">
                         Delta
@@ -418,7 +448,7 @@ export default function Reconciliation() {
                   </TableHead>
                   <TableBody>
                     {data.exceptions.map((exc, i) => (
-                      <TableRow key={i} hover>
+                      <TableRow key={i} hover sx={{ '&:hover': { backgroundColor: '#fafafa' } }}>
                         <TableCell>
                           <Typography variant="body2" fontWeight={600} fontFamily="monospace">
                             {exc.txn_id}
@@ -438,6 +468,18 @@ export default function Reconciliation() {
                           />
                         </TableCell>
                         <TableCell>
+                          <Chip
+                            label={exc.classification_source === "deterministic" ? "Validation" : "AI"}
+                            size="small"
+                            variant="outlined"
+                            sx={{
+                              fontWeight: 500,
+                              borderColor: exc.classification_source === "deterministic" ? "#ff9800" : "#2196f3",
+                              color: exc.classification_source === "deterministic" ? "#ff9800" : "#2196f3",
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
                           {exc.confidence != null ? (
                             <Chip 
                                size="small" 
@@ -446,7 +488,7 @@ export default function Reconciliation() {
                                variant="outlined"
                             />
                           ) : (
-                            <Typography variant="caption" color="text.secondary">N/A</Typography>
+                            <Typography variant="caption" color="text.secondary">—</Typography>
                           )}
                         </TableCell>
                         <TableCell align="right">
@@ -454,6 +496,16 @@ export default function Reconciliation() {
                         </TableCell>
                         <TableCell align="right">
                           {formatCurrency(exc.ledger_amount)}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" color="text.secondary">
+                            {exc.settlement_date || "—"}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" color="text.secondary">
+                            {exc.ledger_date || "—"}
+                          </Typography>
                         </TableCell>
                         <TableCell align="right">
                           <Typography

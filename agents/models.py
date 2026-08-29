@@ -94,14 +94,22 @@ class ReconciliationRun(models.Model):
         return f"Run {self.id} on {self.created_at.strftime('%Y-%m-%d %H:%M')}"
 
 class ReconciliationException(models.Model):
+    CLASSIFICATION_SOURCES = [
+        ("deterministic", "Deterministic Rule"),
+        ("ai", "AI Classification"),
+    ]
+    
     run = models.ForeignKey(ReconciliationRun, on_delete=models.CASCADE, related_name="exceptions")
     txn_id = models.CharField(max_length=100)
     exception_type = models.CharField(max_length=100)
     confidence = models.FloatField(null=True, blank=True)
     settlement_amount = models.FloatField(null=True, blank=True)
     ledger_amount = models.FloatField(null=True, blank=True)
+    settlement_date = models.CharField(max_length=50, null=True, blank=True)
+    ledger_date = models.CharField(max_length=50, null=True, blank=True)
     delta = models.FloatField(null=True, blank=True)
     ai_reasoning = models.TextField(blank=True)
+    classification_source = models.CharField(max_length=20, choices=CLASSIFICATION_SOURCES, default="ai", blank=True)
     ground_truth_type = models.CharField(max_length=100, blank=True)
     is_correct = models.BooleanField(null=True, blank=True)
 

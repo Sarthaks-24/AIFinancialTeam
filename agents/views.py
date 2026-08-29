@@ -569,10 +569,19 @@ class FinancialUploadAPIView(APIView):
 def reconcile_view(request):
     """Run the AI reconciliation engine over settlement + ledger data."""
     from .services.reconciliation_service import run_reconciliation
+    import os
+    from django.conf import settings
 
     try:
         organization = request.user.profile.organization
-        result = run_reconciliation(organization=organization)
+        dataset_name = request.data.get("dataset_name", "canonical_60")
+        data_dir = os.path.join(settings.BASE_DIR, "reconciliation_data", dataset_name)
+        
+        result = run_reconciliation(
+            organization=organization, 
+            data_dir=data_dir, 
+            dataset_name=dataset_name
+        )
         return Response(result)
     except FileNotFoundError:
         return Response(
