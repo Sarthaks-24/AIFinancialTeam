@@ -14,6 +14,7 @@ The 2026 builder consensus is that *verification capacity*, not generation speed
 ## 🏗️ Architecture
 The system uses a layered approach. A deterministic matching engine catches obvious exceptions, and the unresolvable pile is sent to our specialized AI workforce (Nova and Atlas).
 👉 [View the Full Architecture Diagram](docs/architecture_diagram.md)
+👉 [View the Hackathon Technical & Product Snapshot](docs/project_snapshot.md)
 
 ## ⚙️ Technology Stack
 - **Frontend**: React, Vite, Material UI (MUI), Recharts
