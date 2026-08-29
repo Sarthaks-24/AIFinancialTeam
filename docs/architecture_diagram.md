@@ -18,6 +18,7 @@ flowchart TD
         Router["Nexus Router<br/>(API Gateway)"]:::backend
         RecService["reconciliation_service.py"]:::backend
         Auth["JWT Auth / RBAC"]:::backend
+        Echo["Echo<br/>(Context + Turns)"]:::memory
     end
     
     subgraph Logic ["Reconciliation Engine"]
@@ -28,8 +29,7 @@ flowchart TD
     
     subgraph AI_Workforce ["Multi-Agent AI Workforce"]
         DelEngine["Delegation Engine"]:::agent
-        Nova["Nova<br/>(Reconciliation Specialist)"]:::agent
-        Atlas["Atlas<br/>(Chief of Staff)"]:::agent
+        Ledger["Ledger<br/>(Reconciliation Specialist)"]:::agent
         Gemini["Google Gemini<br/>(LLM / Embeddings)"]:::memory
     end
     
@@ -41,20 +41,21 @@ flowchart TD
     %% Flows
     UI -->|Triggers Run| API_Call
     API_Call -->|POST /api/reconcile| Auth
-    Auth --> Router
-    Router --> RecService
+    Auth -->|POST /api/ask Ledger| Router
+    Auth -->|POST /api/reconcile| RecService
+    Router --> Echo
+    Router --> Ledger
+    Ledger --> RecService
     
     RecService -->|"Loads"| SynData
     SynData -->|"Feeds"| DetMatch
-    DetMatch -->|"Unresolved Rows"| Nova
-    Nova -->|"Asks API"| Gemini
-    Gemini -->|"Returns Classes<br/>& Confidence"| Nova
-    Nova -->|"Enriched Discrepancies"| RecService
+    DetMatch -->|"Unresolved Rows"| Ledger
+    Ledger -->|"Asks API"| Gemini
+    Gemini -->|"Returns Classes<br/>& Reasoning"| Ledger
+    Ledger -->|"Enriched Discrepancies"| RecService
     
-    RecService -->|"Exceptions"| Atlas
-    Atlas -->|"Asks API"| Gemini
-    Gemini -->|"Returns Exec Summary"| Atlas
-    Atlas -->|"Summary"| RecService
+    RecService -->|"Exceptions + Summary Request"| Gemini
+    Gemini -->|"Returns Exec Summary"| RecService
     
     RecService -->|"Measures Accuracy against<br/>Ground Truth"| Eval
     Eval -->|"Metrics"| RecService
@@ -63,4 +64,5 @@ flowchart TD
     RecService -->|"Persists"| RecExc
     
     RecService -->|"Returns KPIs,<br/>Metrics & Results"| UI
+    Router -->|"Writes user + Ledger turns"| Echo
 ```

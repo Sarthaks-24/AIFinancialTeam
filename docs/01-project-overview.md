@@ -2,13 +2,13 @@
 
 ## What Is This?
 
-**AI Financial Workforce** is a multi-agent AI platform for enterprise finance and operations teams. Instead of a single chatbot, it provides a *coordinated workforce* of six specialized AI agents, each with a distinct domain, persona, and data scope.
+**AI Financial Workforce** is a multi-agent AI platform for enterprise finance and operations teams. Instead of a single chatbot, it provides a *coordinated workforce* of seven specialized AI agents, each with a distinct domain, persona, and data scope.
 
 The codebase started as a simpler "AI Financial Team" finance copilot (Django + React + stateless Gemini calls) and is being evolved into the full AI Financial Team workforce described in the product proposal.
 
 ---
 
-## The Vision: Six AI Specialists
+## The Vision: Seven AI Specialists
 
 | Specialist | Title | Domain |
 |---|---|---|
@@ -18,6 +18,7 @@ The codebase started as a simpler "AI Financial Team" finance copilot (Django + 
 | **Aria** | AI Operations Manager | Procurement, vendors, contracts, approvals |
 | **Orion** | AI Compliance Officer | Audit, policy, governance, risk |
 | **Luna** | AI Product Specialist | Onboarding, product knowledge, troubleshooting |
+| **Ledger** | AI Reconciliation Controller | Settlement-to-ledger matching, exception classification, accuracy |
 
 Users can talk directly to any specialist, or ask Atlas (or the **Ava** companion) a cross-functional question and have multiple specialists collaborate in real time.
 
@@ -31,8 +32,8 @@ Users can talk directly to any specialist, or ask Atlas (or the **Ava** companio
 │  Routes queries → dispatches specialists        │
 │  Enforces permissions, handles delegation       │
 ├─────────────────────────────────────────────────┤
-│  Six Specialists (Atlas, Vega, Nova, Aria,      │
-│  Orion, Luna) — each a BaseSpecialist subclass  │
+│  Seven Specialists (Atlas, Vega, Nova, Aria,    │
+│  Orion, Luna, Ledger) — BaseSpecialist classes  │
 │  Gathers domain data → calls Gemini → responds  │
 ├─────────────────────────────────────────────────┤
 │  Echo — Shared Memory Engine                    │
@@ -69,10 +70,10 @@ Users can talk directly to any specialist, or ask Atlas (or the **Ava** companio
 
 ---
 
-## Current Status (as of Phase 3 / early Phase 5)
+## Current Status (as of the completed reconciliation integration)
 
 ### What is fully built ✅
-- **All six specialists** registered in Nexus (`AtlasAgent`, `VegaAgent`, `NovaAgent`, `AriaAgent`, `OrionAgent`, `LunaAgent`)
+- **All seven specialists** registered in Nexus (`AtlasAgent`, `VegaAgent`, `NovaAgent`, `AriaAgent`, `OrionAgent`, `LunaAgent`, `LedgerAgent`)
 - **Echo memory** — `Conversation`, `Turn`, `MemoryFact` models; `get_context()` / `write_turn()` / `get_relevant_facts()` service functions
 - **Nexus routing** — classify-then-dispatch via registry; no hardcoded if/elif
 - **Delegation** — Atlas → Vega + Nova → Atlas synthesis with real-time SSE delegation events
@@ -86,7 +87,7 @@ Users can talk directly to any specialist, or ask Atlas (or the **Ava** companio
 - **Orion** and **Luna** have minimal real data (stubs respond based on `ComplianceRecord` / `PolicyDocument` models but those need population)
 - **Vector/embedding retrieval** in Echo is partially implemented; cosine similarity used for `MemoryFact` retrieval but embeddings must be pre-generated at `write_fact()` time
 - **Proactive AI** (Phase 4 goal) — not started
-- **Multi-tenancy hardening** (Phase 4) — scoping exists via `Organization` FK but not fully hardened across all endpoints
+- **Reconciliation evaluation** — clean synthetic cases score perfectly, while multi-field stress cases expose amount/date confusion; the ground truth is project-generated rather than independently labeled
 
 ---
 

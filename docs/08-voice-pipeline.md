@@ -102,7 +102,7 @@ When a specialist is called via voice, `response_style` is set to `"voice"`. Thi
 - One key number + one comparison or action. Nothing else.
 ```
 
-This keeps spoken responses natural and brief. All six specialists support voice (the `voice_enabled = True` default on `BaseSpecialist`).
+This keeps spoken responses natural and brief. All seven registered specialists support the voice route (the `voice_enabled = True` default on `BaseSpecialist`), including Ledger for spoken reconciliation summaries.
 
 ---
 

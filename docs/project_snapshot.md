@@ -1,13 +1,13 @@
 # AI-Financial-Team: Technical & Product Snapshot
 
 ## 1. Elevator Pitch
-**AI-Financial-Team** is a multi-agent financial controller designed to automate the manual bottleneck of financial reconciliation and settlement resolution for finance ops teams. Instead of forcing LLMs to perform arithmetic or hallucinate matches (a common failure mode), this system delegates exact matching to a high-speed deterministic rules engine. It uses AI meaningfully by passing only complex, unresolvable exceptions to an LLM-backed specialized agent ("Nova") for classification and contextual reasoning, followed by synthesized executive reporting via an orchestration agent ("Atlas").
+**AI-Financial-Team** is a multi-agent financial controller designed to automate the manual bottleneck of financial reconciliation and settlement resolution for finance ops teams. Instead of forcing LLMs to perform arithmetic or hallucinate matches (a common failure mode), this system delegates exact matching to a deterministic rules engine. The registered `Ledger` specialist sends unresolved exceptions to Gemini for classification and reasoning, while the engine also produces an executive summary.
 
 ## 2. Architecture & Orchestration
 - **Data Flow:** Synthetic Razorpay settlement and internal ledger CSVs → Django Backend → Deterministic Matching Sieve → AI Exception Classification → Persistent Audit Database → React UI.
-- **Deterministic Layer:** `reconciliation_service.py` performs rigorous pre-matching (exact equality check on `txn_id`/`reference` + `amount`).
+- **Deterministic Layer:** `reconciliation_service.py` performs rigorous pre-matching (exact equality check on `txn_id`/`reference`, `amount`, and date).
 - **AI / Agentic Layer:** Exceptions containing numerical deltas or missing data bypass the deterministic layer and are sent to Gemini via `ask_specialist`. The AI is strictly bounded to returning JSON containing a predefined enum classification (`amount_mismatch`, `missing_in_ledger`, etc.) and a reasoning string.
-- **Orchestration Logic:** `nexus/` manages the agent registry skeleton, while `echo/` acts as the embedded shared memory/context engine to provide persistent states for the agents.
+- **Orchestration Logic:** `nexus/` registers and routes Ledger alongside the other specialists, while `echo/` provides the shared conversation context and turn history for Ledger requests.
 
 ## 3. Tech Stack
 - **Languages:** Python (Backend/Data Generation), JavaScript (Frontend).
@@ -17,25 +17,25 @@
 
 ## 4. Measured Results (Framework & Recent Metrics)
 - **Methodology:** The `generate_synthetic_data.py` script intentionally injects discrepancies (amount drifts, missing records, date offsets) tracked directly in a deterministically generated `ground_truth.json`.
-- **Match Rate:** Exactly 83.3% prior to AI intervention (50/60 matched deterministically).
+- **Canonical Match Rate:** 83.3% (50/60 matched deterministically after date-aware matching).
 - **Test Batch & Discrepancies:** Exactly `60` synthetic records. `10` exceptions injected: `3 amount_mismatch`, `3 missing_in_ledger`, `2 missing_in_settlement`, `2 date_mismatch`.
-- **F1 / Precision / Recall:** Computed per-category by `_evaluate_accuracy()` strictly comparing Gemini's JSON label output against the ground-truth manifest. Scores output dynamically to the dashboard.
+- **F1 / Precision / Recall:** Computed per-category by `_evaluate_accuracy()` against the ground-truth manifest and shown in the reconciliation dashboard. The latest clean canonical run scored 1.0000 overall F1; `stress_220` and `stress_280` scored 0.9500 with amount/date confusion at category F1 0.6667.
 
 ## 5. Safety & Guardrails
 - **Execution Bounding:** AI does absolutely zero math operations or system state mutation. Its sole function is classification, eliminating hallucinated money movement risk.
 - **Resilient Fallback:** If the Gemini API call times out or returns malformed JSON, the `try-except` block catches it and gracefully falls back to the deterministic `hint` category without crashing the frontend flow.
-- **Unresolvable State:** Gemini is explicitly prompted with an `unresolvable` option. The UI surfaces these or any classifications with < 0.5 confidence explicitly for manual review, refusing to force an AI match.
+- **Unresolvable State:** Gemini is explicitly prompted with an `unresolvable` option. Timeouts, malformed JSON, duplicate references, and invalid input are retained as visible exception records instead of crashing or being silently dropped.
 - **Defense-Only System & Auditability:** The system categorizes error types and saves reasoning to Postgres (`ReconciliationException`), acting directly as an honest, observable audit trail.
 
 ## 6. Current State (Working vs. Stubbed)
-- **Working End-to-End:** Synthetic data generation, deterministic pre-matching, Gemini-powered exception reasoning, F1 evaluation loop, DB persistence, React dashboard UI.
+- **Working End-to-End:** Synthetic data generation, date-aware deterministic pre-matching, Gemini-powered exception reasoning, F1 evaluation loop, organization-scoped DB persistence, Ledger Nexus routing, Echo history, and React dashboard UI.
 - **Stubbed / In-Progress:** Dynamic AI Facial UI (planned in `faceplan.md` using animations).
 
 ## 7. Demo Flow
 1. **Landing:** User opens Dashboard view.
 2. **Action:** Navigates to `/reconciliation` and clicks "Run Reconciliation".
 3. **Loading:** Shows "Running AI reconciliation engine…" (deterministic + AI steps running).
-4. **Top KPIs:** Dashboard populates with Total (60), Matched (50), Match Rate (83.3%), Exceptions (10).
-5. **AI Accuracy Visualization:** Precision, Recall, F1 Score, and System Throughput widgets render. Recharts Pie Chart visualizes discrepancy breakdowns.
+4. **Top KPIs:** Dashboard populates with the selected dataset's total, matched count, match rate, exceptions, and processing time.
+5. **AI Accuracy Visualization:** Overall and per-category precision, recall, and F1 widgets render. Recharts Pie Chart visualizes discrepancy breakdowns.
 6. **Audit Trail:** User reads the Exception Table showing specific records, Delta amounts, Confidence scores, and explicit `ai_reasoning` generated by the AI models.
 7. **History:** Paginated "Run History" proves historical DB-persisted metric tracking.
