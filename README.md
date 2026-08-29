@@ -12,7 +12,7 @@ The 2026 builder consensus is that *verification capacity*, not generation speed
 3. **Persistent Audit Trail**: Every reconciliation run, F1 metrics, and AI rationale is persisted securely to a Postgres database, viewable via the Run History UI. 
 
 ## 🏗️ Architecture
-The reconciliation capability is an AI-assisted finance-ops engine exposed through the same Django API and Nexus routing path as the rest of the application. The registered `Ledger` specialist uses the platform's Gemini integration: a deterministic matching engine catches exact matches, unresolved rows are classified by Gemini through the existing AI service, and Gemini produces an executive summary. Nexus loads and writes Ledger conversation turns through Echo, while the dedicated reconciliation endpoints remain available for the dashboard workflow.
+The reconciliation capability is an AI-assisted finance-ops engine exposed through the same Django API and Nexus routing path as the rest of the application. The registered `Ledger` specialist uses the platform's Gemini integration: a deterministic matching engine catches exact matches, unresolved rows are classified by Gemini through the existing AI service, and Gemini produces an executive summary. Nexus loads and writes Ledger conversation turns through Echo. `POST /api/ask/` with Ledger and `POST /api/reconcile/` are two entry points to the same engine: the former provides conversational specialist routing, while the latter supports the dashboard's direct batch workflow, so neither is redundant.
 👉 [View the Full Architecture Diagram](docs/architecture_diagram.md)
 👉 [View the Hackathon Technical & Product Snapshot](docs/project_snapshot.md)
 

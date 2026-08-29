@@ -177,7 +177,7 @@ Add `ComplianceRecord` and `PolicyDocument` rows via Django Admin, linked to the
   ```json
   {
     "capabilities": [
-      "Chat with any of the six specialists",
+      "Chat with any of the seven specialists",
       "Upload CSV/XLSX financial data",
       ...
     ]
@@ -201,7 +201,7 @@ Luna's knowledge base is currently embedded in `workforce.py`. In a future phase
 - Returns match rate, exception details, runtime accuracy metrics, throughput, and an executive summary.
 - Persists each run to the organization attached to the authenticated user.
 
-Ledger is registered with `@register_specialist` and is reachable through the normal `POST /api/ask/` Nexus route. Nexus loads the user's Echo context before handling the request and writes both the user question and Ledger summary to Echo afterward. The dedicated `POST /api/reconcile/` endpoint remains available for the reconciliation dashboard.
+Ledger is registered with `@register_specialist` and is reachable through the normal `POST /api/ask/` Nexus route. Nexus loads the user's Echo context before handling the request and writes both the user question and Ledger summary to Echo afterward. The dedicated `POST /api/reconcile/` endpoint invokes the same underlying engine for the reconciliation dashboard, so it is a complementary batch entry point rather than a redundant implementation.
 
 ---
 

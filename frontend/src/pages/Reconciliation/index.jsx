@@ -505,6 +505,7 @@ export default function Reconciliation() {
                    <Table size="small">
                      <TableHead>
                        <TableRow>
+                         <TableCell>Dataset</TableCell>
                          <TableCell>Date</TableCell>
                          <TableCell>Total</TableCell>
                          <TableCell>Exceptions</TableCell>
@@ -515,6 +516,7 @@ export default function Reconciliation() {
                      <TableBody>
                         {history.results.map((hRun) => (
                            <TableRow key={hRun.id}>
+                            <TableCell>{hRun.dataset_name || "canonical_60"}</TableCell>
                               <TableCell>{new Date(hRun.created_at).toLocaleString()}</TableCell>
                               <TableCell>{hRun.total_processed}</TableCell>
                               <TableCell>{hRun.exceptions_count}</TableCell>

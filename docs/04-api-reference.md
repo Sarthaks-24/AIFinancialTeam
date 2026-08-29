@@ -122,33 +122,6 @@ List all registered specialists the authenticated user can access.
 [
   {
     "name": "Atlas",
-## Reconciliation
-
-Reconciliation is available as the registered `Ledger` Nexus specialist and through dedicated Django endpoints. The Ledger route uses the normal Nexus Echo context and turn persistence; the dedicated endpoint remains the dashboard-oriented batch API.
-
-### `POST /api/ask/` with `specialist: "Ledger"`
-Run reconciliation through Nexus specialist routing.
-
-**Auth required:** Yes (IsAuthenticated)
-
-**Request body:** Uses the standard `/api/ask/` body with `specialist` set to `Ledger` (or `Reconciliation`, `Recon`, or `Reconciliation Engine`).
-
-**Response:** SSE stream containing Ledger metadata, reconciliation metrics, exception details, AI summary, and the final analysis. The request and Ledger summary are persisted in Echo conversation history.
-
-### `POST /api/reconcile/`
-Run reconciliation through the dedicated dashboard endpoint against the generated Razorpay settlement and internal ledger files.
-
-**Auth required:** Yes (IsAuthenticated)
-
-**Response:** Includes processed and matched record counts, match rate, processing time, exception details, an AI summary, and runtime accuracy metrics under `accuracy` (`overall` and `by_category`). The overall F1 score is also persisted with the organization-owned run.
-
-### `GET /api/reconcile/history/`
-List reconciliation runs for the authenticated user's organization, newest first. Each run includes its related exception records.
-
-**Auth required:** Yes (IsAuthenticated)
-
-**Query parameters:** `page` — optional pagination page number.
-
     "title": "AI Chief of Staff",
     "domain": "executive_intelligence",
     "description": "Executive summaries, business health, and KPI narration.",
@@ -162,6 +135,35 @@ List reconciliation runs for the authenticated user's organization, newest first
   ...
 ]
 ```
+
+---
+
+## Reconciliation
+
+Reconciliation is available as the registered `Ledger` Nexus specialist and through dedicated Django endpoints. Both entry points invoke the same underlying reconciliation engine; `/api/ask/` provides conversational Nexus routing and Echo history, while `/api/reconcile/` is the dashboard-oriented direct batch entry point.
+
+### `POST /api/ask/` with `specialist: "Ledger"`
+Run reconciliation through Nexus specialist routing.
+
+**Auth required:** Yes (IsAuthenticated)
+
+**Request body:** Uses the standard `/api/ask/` body with `specialist` set to `Ledger` (or `Reconciliation`, `Recon`, or `Reconciliation Engine`).
+
+**Response:** SSE stream containing Ledger metadata, reconciliation metrics, exception details, AI summary, and the final analysis. The request and Ledger summary are persisted in Echo conversation history.
+
+### `POST /api/reconcile/`
+Run reconciliation through the direct dashboard endpoint against the generated Razorpay settlement and internal ledger files.
+
+**Auth required:** Yes (IsAuthenticated)
+
+**Response:** Includes processed and matched record counts, match rate, processing time, exception details, an AI summary, and runtime accuracy metrics under `accuracy` (`overall` and `by_category`). The overall F1 score is also persisted with the organization-owned run.
+
+### `GET /api/reconcile/history/`
+List reconciliation runs for the authenticated user's organization, newest first. Each run includes its related exception records.
+
+**Auth required:** Yes (IsAuthenticated)
+
+**Query parameters:** `page` — optional pagination page number.
 
 ---
 

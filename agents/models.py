@@ -80,6 +80,7 @@ class FinancialUpload(models.Model):
 
 class ReconciliationRun(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True)
+    dataset_name = models.CharField(max_length=100, default="canonical_60")
     total_processed = models.IntegerField()
     matched = models.IntegerField()
     exceptions_count = models.IntegerField()
