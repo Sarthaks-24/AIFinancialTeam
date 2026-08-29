@@ -32,7 +32,7 @@ def _load_data():
 
 def _deterministic_match(settlements: pd.DataFrame, ledger: pd.DataFrame):
     """
-    First pass: exact match on txn_id == reference AND amount equality.
+    First pass: exact match on txn_id == reference, amount, and date.
     Returns (matched_pairs, unmatched_settlements, unmatched_ledger).
     """
     matched = []
@@ -50,12 +50,26 @@ def _deterministic_match(settlements: pd.DataFrame, ledger: pd.DataFrame):
             s_amount = float(s_row["amount"])
             l_amount = float(l_row["amount"])
 
-            if abs(s_amount - l_amount) < 0.01:
+            settlement_date = str(s_row["settled_at"])
+            ledger_date = str(l_row["date"])
+
+            if abs(s_amount - l_amount) < 0.01 and settlement_date == ledger_date:
                 # Perfect match
                 matched.append({
                     "txn_id": txn_id,
                     "settlement_amount": s_amount,
                     "ledger_amount": l_amount,
+                })
+            elif abs(s_amount - l_amount) < 0.01:
+                # Date mismatch — send to AI
+                unmatched_settlements.append({
+                    "txn_id": txn_id,
+                    "settlement_amount": s_amount,
+                    "ledger_amount": l_amount,
+                    "settlement_date": settlement_date,
+                    "ledger_date": ledger_date,
+                    "delta": 0,
+                    "hint": "date_mismatch",
                 })
             else:
                 # Amount mismatch — send to AI
@@ -63,8 +77,8 @@ def _deterministic_match(settlements: pd.DataFrame, ledger: pd.DataFrame):
                     "txn_id": txn_id,
                     "settlement_amount": s_amount,
                     "ledger_amount": l_amount,
-                    "settlement_date": s_row["settled_at"],
-                    "ledger_date": l_row["date"],
+                    "settlement_date": settlement_date,
+                    "ledger_date": ledger_date,
                     "delta": round(s_amount - l_amount, 2),
                     "hint": "amount_mismatch",
                 })
@@ -121,6 +135,8 @@ def _ai_classify_exceptions(unresolved: list[dict]) -> list[dict]:
     question = (
         "Classify each unresolved record into one of these categories: "
         "amount_mismatch, date_mismatch, missing_in_ledger, missing_in_settlement, unresolvable. "
+        "Compare settlement_date with ledger_date explicitly: when the transaction ID and amount "
+        "match but the dates differ, classify it as date_mismatch. "
         "For each, provide a short reasoning explaining the discrepancy.\n\n"
         "Return your response as a JSON array with objects having keys: "
         "txn_id, type, reasoning.\n"
@@ -241,7 +257,7 @@ def _evaluate_accuracy(exceptions: list[dict]) -> dict:
     }
 
 
-def run_reconciliation() -> dict:
+def run_reconciliation(organization=None) -> dict:
     """
     Full reconciliation pipeline.
     Returns structured result dict ready for the API response.
@@ -267,6 +283,7 @@ def run_reconciliation() -> dict:
 
     # Persist the run
     run_obj = ReconciliationRun.objects.create(
+        organization=organization,
         total_processed=total_unique,
         matched=matched_count,
         exceptions_count=len(exceptions),

@@ -550,7 +550,8 @@ def reconcile_view(request):
     from .services.reconciliation_service import run_reconciliation
 
     try:
-        result = run_reconciliation()
+        organization = request.user.profile.organization
+        result = run_reconciliation(organization=organization)
         return Response(result)
     except FileNotFoundError:
         return Response(

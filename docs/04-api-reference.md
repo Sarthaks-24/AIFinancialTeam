@@ -117,6 +117,24 @@ List all registered specialists the authenticated user can access.
 
 **Auth required:** Yes (IsAuthenticated)
 
+## Reconciliation
+
+Reconciliation is an AI-assisted finance-operations engine exposed through Django. It reuses the platform's Gemini integration but is not currently registered as a Nexus specialist or connected to Echo memory.
+
+### `POST /api/reconcile/`
+Run reconciliation against the generated Razorpay settlement and internal ledger files.
+
+**Auth required:** Yes (IsAuthenticated)
+
+**Response:** Includes processed and matched record counts, match rate, processing time, exception details, an AI summary, and runtime accuracy metrics under `accuracy` (`overall` and `by_category`). The overall F1 score is also persisted with the run.
+
+### `GET /api/reconcile/history/`
+List reconciliation runs for the authenticated user's organization, newest first. Each run includes its related exception records.
+
+**Auth required:** Yes (IsAuthenticated)
+
+**Query parameters:** `page` — optional pagination page number.
+
 **Response:**
 ```json
 [
