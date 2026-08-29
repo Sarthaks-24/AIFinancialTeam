@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import QueryLog
 from .models import FinancialMetric
 from .models import FinancialUpload
+from .models import ReconciliationRun
+from .models import ReconciliationException
 
 
 
@@ -43,3 +45,14 @@ class FinancialUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = FinancialUpload
         fields = "__all__"
+
+class ReconciliationExceptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReconciliationException
+        fields = '__all__'
+
+class ReconciliationRunSerializer(serializers.ModelSerializer):
+    exceptions = ReconciliationExceptionSerializer(many=True, read_only=True)
+    class Meta:
+        model = ReconciliationRun
+        fields = '__all__'

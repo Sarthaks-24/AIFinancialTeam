@@ -564,3 +564,18 @@ def reconcile_view(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+from .models import ReconciliationRun
+from .serializers import ReconciliationRunSerializer
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def reconcile_history_view(request):
+    org = request.user.profile.organization if hasattr(request.user, "profile") else None
+    runs = ReconciliationRun.objects.filter(organization=org).order_by("-created_at")
+    
+    paginator = CustomPagination()
+    page = paginator.paginate_queryset(runs, request)
+
+    serializer = ReconciliationRunSerializer(page, many=True)
+    return paginator.get_paginated_response(serializer.data)
+

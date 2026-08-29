@@ -13,6 +13,7 @@ Usage:
 """
 
 import csv
+import json
 import os
 import random
 from datetime import datetime, timedelta
@@ -182,6 +183,21 @@ def main():
 
     write_settlements_csv(records, settlements_path)
     write_ledger_csv(records, ledger_path)
+
+    # Build and write ground truth JSON
+    ground_truth = {
+        "total_records": NUM_RECORDS,
+        "discrepancies": {}
+    }
+    for rec in records:
+        idx = rec["index"]
+        txn_id = rec["txn_id"]
+        dtype = discrepancy_map.get(idx, "matched")
+        ground_truth["discrepancies"][txn_id] = dtype
+        
+    gt_path = os.path.join(OUTPUT_DIR, "ground_truth.json")
+    with open(gt_path, "w", encoding="utf-8") as f:
+        json.dump(ground_truth, f, indent=2)
 
     # Count actual rows written
     settlement_count = sum(1 for r in records if not r.get("skip_settlement"))

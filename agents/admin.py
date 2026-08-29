@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ComplianceRecord, FinancialMetric, FinancialUpload, QueryLog, Report, Task, Vendor, Contract, PolicyDocument
+from .models import ComplianceRecord, FinancialMetric, FinancialUpload, QueryLog, Report, Task, Vendor, Contract, PolicyDocument, ReconciliationRun, ReconciliationException
 
 admin.site.register(FinancialMetric)
 admin.site.register(QueryLog)
@@ -10,3 +10,5 @@ admin.site.register(Vendor)
 admin.site.register(ComplianceRecord)
 admin.site.register(Contract)
 admin.site.register(PolicyDocument)
+admin.site.register(ReconciliationRun)
+admin.site.register(ReconciliationException)

@@ -78,6 +78,35 @@ class FinancialUpload(models.Model):
     def __str__(self):
         return self.file_name
 
+class ReconciliationRun(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True)
+    total_processed = models.IntegerField()
+    matched = models.IntegerField()
+    exceptions_count = models.IntegerField()
+    match_rate_pct = models.FloatField()
+    accuracy_overall_f1 = models.FloatField(null=True, blank=True)
+    processing_time_ms = models.IntegerField()
+    ai_summary = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Run {self.id} on {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+class ReconciliationException(models.Model):
+    run = models.ForeignKey(ReconciliationRun, on_delete=models.CASCADE, related_name="exceptions")
+    txn_id = models.CharField(max_length=100)
+    exception_type = models.CharField(max_length=100)
+    confidence = models.FloatField(null=True, blank=True)
+    settlement_amount = models.FloatField(null=True, blank=True)
+    ledger_amount = models.FloatField(null=True, blank=True)
+    delta = models.FloatField(null=True, blank=True)
+    ai_reasoning = models.TextField(blank=True)
+    ground_truth_type = models.CharField(max_length=100, blank=True)
+    is_correct = models.BooleanField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.txn_id} - {self.exception_type}"
+
 
 class Vendor(models.Model):
     class RiskLevel(models.TextChoices):

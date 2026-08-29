@@ -196,6 +196,51 @@ def _ai_summary(exceptions: list[dict], match_rate: float, total: int) -> str:
         return "Summary generation unavailable."
 
 
+def _evaluate_accuracy(exceptions: list[dict]) -> dict:
+    """Compare predicted exception types with the generated ground truth."""
+    gt_path = os.path.join(DATA_DIR, "ground_truth.json")
+    if not os.path.exists(gt_path):
+        return {}
+
+    with open(gt_path, "r", encoding="utf-8") as f:
+        ground_truth = json.load(f).get("discrepancies", {})
+
+    predictions = {exception["txn_id"]: exception.get("type", "unresolvable") for exception in exceptions}
+    labels = set(ground_truth.values()) | set(predictions.values())
+    by_category = {}
+
+    for label in sorted(labels):
+        true_positive = false_positive = false_negative = 0
+        for txn_id, actual in ground_truth.items():
+            predicted = predictions.get(txn_id, "matched")
+            true_positive += predicted == label and actual == label
+            false_positive += predicted == label and actual != label
+            false_negative += predicted != label and actual == label
+
+        precision = true_positive / (true_positive + false_positive) if true_positive + false_positive else 0
+        recall = true_positive / (true_positive + false_negative) if true_positive + false_negative else 0
+        f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0
+        by_category[label] = {
+            "precision": round(precision, 4),
+            "recall": round(recall, 4),
+            "f1": round(f1, 4),
+        }
+
+    total_correct = sum(
+        predictions.get(txn_id, "matched") == actual
+        for txn_id, actual in ground_truth.items()
+    )
+    overall = total_correct / len(ground_truth) if ground_truth else 0
+    return {
+        "overall": {
+            "precision": round(overall, 4),
+            "recall": round(overall, 4),
+            "f1": round(overall, 4),
+        },
+        "by_category": by_category,
+    }
+
+
 def run_reconciliation() -> dict:
     """
     Full reconciliation pipeline.
@@ -216,6 +261,49 @@ def run_reconciliation() -> dict:
     elapsed_ms = round((time.time() - start) * 1000)
 
     summary = _ai_summary(exceptions, match_rate, total_unique)
+    accuracy = _evaluate_accuracy(exceptions)
+
+    from agents.models import ReconciliationRun, ReconciliationException
+
+    # Persist the run
+    run_obj = ReconciliationRun.objects.create(
+        total_processed=total_unique,
+        matched=matched_count,
+        exceptions_count=len(exceptions),
+        match_rate_pct=match_rate,
+        accuracy_overall_f1=accuracy.get("overall", {}).get("f1") if "overall" in accuracy else None,
+        processing_time_ms=elapsed_ms,
+        ai_summary=summary,
+    )
+
+    # Persist the exceptions
+    exc_objects = []
+    
+    gt_path = os.path.join(DATA_DIR, "ground_truth.json")
+    ground_truth = {}
+    if os.path.exists(gt_path):
+        with open(gt_path, "r", encoding="utf-8") as f:
+            ground_truth = json.load(f).get("discrepancies", {})
+
+    for e in exceptions:
+        tid = e["txn_id"]
+        ptype = e["type"]
+        gtype = ground_truth.get(tid, "matched")
+        
+        exc_objects.append(ReconciliationException(
+            run=run_obj,
+            txn_id=tid,
+            exception_type=ptype,
+            confidence=e.get("confidence"),
+            settlement_amount=e.get("settlement_amount"),
+            ledger_amount=e.get("ledger_amount"),
+            delta=e.get("delta"),
+            ai_reasoning=e.get("ai_reasoning", ""),
+            ground_truth_type=gtype,
+            is_correct=(ptype == gtype)
+        ))
+    
+    ReconciliationException.objects.bulk_create(exc_objects)
 
     return {
         "total_settlement_records": len(settlements),
@@ -227,4 +315,6 @@ def run_reconciliation() -> dict:
         "processing_time_ms": elapsed_ms,
         "exceptions": exceptions,
         "ai_summary": summary,
+        "accuracy": accuracy,
+        "throughput_records_per_sec": round(total_unique / (elapsed_ms / 1000), 2) if elapsed_ms else 0,
     }

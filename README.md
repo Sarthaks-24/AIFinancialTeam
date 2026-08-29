@@ -1,36 +1,41 @@
-# AI-Financial-Team
+# AI-Financial-Team: Track 04 (AI Finance Controller)
 
-AI-Financial-Team is a powerful, multi-agent AI financial workforce built to streamline financial operations, provide deep numerical analysis, and offer conversational, context-aware insights. Built as a comprehensive full-stack application, it brings a team of financial "specialists" to your fingertips, driven by Google's Gemini models.
+AI-Financial-Team is a powerful, multi-agent AI financial workforce engineered specifically to solve the manual bottleneck of financial reconciliation and settlement forecasting.
 
-This system replaces traditional single-chatbot interfaces with a coordinated AI workforce. Each AI specialist focuses on distinct domains of the enterprise—from treasury and reporting to compliance and procurement—working together to synthesize data, handle tasks, and answer complex financial questions.
+Built for the **Razorpay AI Buildathon (Track 04: AI Finance Controller)**, this system runs the books and matches a large batch of synthetic data (Razorpay settlements vs Internal Ledger), reporting its accuracy and surfacing an honest exception list.
 
-## Core Features
+## 🏆 Tackling Track 04: The Bar
+The 2026 builder consensus is that *verification capacity*, not generation speed, is the bottleneck. The Track 04 "bar" demands: **Throughput plus measured accuracy plus an honest exception list.** Here is how we meet it:
 
-- **Coordinated Agent Workforce**: A platform orchestration layer (Nexus) that routes queries to distinct, specialized AI agents (e.g., Nova for cash management, Atlas for executive summaries, Vega for data analysis) based on domain expertise.
-- **Contextual Shared Memory (Echo)**: A memory engine that retains conversation history, organizational context, and user preferences to eliminate repetitive prompting and preserve continuity.
-- **Financial Data Integration**: Supports secure data uploads (CSV/XLSX), parsing raw metrics into meaningful insights and interactive dashboards.
-- **Role-Based Access Control**: Secure, JWT-authenticated role-based restrictions tailored for CFOs, Finance Managers, and Auditors.
-- **Seamless Chat Interface**: A modern, responsive React-based interface allowing on-demand interactions, real-time streaming, and visual data delivery via charts.
+1. **Measured Accuracy (Precision/Recall/F1)**: Our system doesn't just guess. It compares its AI classifications against a deterministic "ground truth" manifest generated alongside the synthetic data, explicitly reporting its F1 score per discrepancy category.
+2. **Honest Exception List**: The AI ranks its confidence for every discrepancy. Any record below a strict confidence threshold (or deemed unresolvable) is flagged directly on the dashboard. We don't force an incorrect match where human review is genuinely necessary.
+3. **Persistent Audit Trail**: Every reconciliation run, F1 metrics, and AI rationale is persisted securely to a Postgres database, viewable via the Run History UI. 
 
-## Technology Stack
+## 🏗️ Architecture
+The system uses a layered approach. A deterministic matching engine catches obvious exceptions, and the unresolvable pile is sent to our specialized AI workforce (Nova and Atlas).
+👉 [View the Full Architecture Diagram](docs/architecture_diagram.md)
 
+## ⚙️ Technology Stack
 - **Frontend**: React, Vite, Material UI (MUI), Recharts
-- **Backend**: Django, Django REST Framework, PostgreSQL
-- **AI Engine**: Google Generative AI (Gemini API)
+- **Backend**: Django REST Framework, PostgreSQL
+- **AI Engine**: Google Generative AI (Gemini Flash)
+- **Memory**: Embedded Shared Memory (Echo)
 
-## Getting Started
-
+## 🚀 Getting Started
 Please refer to the [Project Setup Guide](setup.md) for detailed instructions on prerequisites, environment configuration, database migration, and running both the Django backend and the Vite React frontend locally.
 
-## Project Structure
+### Running the Reconciliation
+1. Generate the synthetic test data:
+   ```bash
+   python generate_synthetic_data.py
+   ```
+   This generates 60 synthetic records and intentionally injects 10 discrepancies (amount mismatches, date mismatches, missing records). 
+2. Start the Backend and Frontend.
+3. Navigate to the **Reconciliation Engine** page in the dashboard and click *Run Reconciliation*.
 
-- `frontend/` - Contains the React UI, Vite build configurations, and user interfaces for Data Uploads, Dashboard, and AI Chat.
-- `backend/` - Base Django project settings, routing, and configurations.
-- `agents/` - Houses the DRF views, specialized agents logic, and services to communicate with the Gemini API.
-- `nexus/` - Orchestration skeleton for agent registry, routing, and access permissions.
-- `echo/` - Context and shared memory engine handling conversations and organizational facts.
-- `voice/` - (Phase 2+) AI Speech-to-Text (STT) and Text-to-Speech (TTS) integration.
-- `docs/` - System documentation and architectural details.
-
-## License & Contribution
-Please check with repository administrators for specific contribution workflows, branch conventions, and licensing details.
+## 📂 Project Structure
+- `frontend/` - React UI (Reconciliation Dashboard, KPIs).
+- `backend/` - Django configuration.
+- `agents/` - REST API endpoints, AI service logic, and the Reconciliation Engine pipeline.
+- `nexus/` - Orchestration skeleton for agent registry.
+- `echo/` - Context and shared memory engine.
