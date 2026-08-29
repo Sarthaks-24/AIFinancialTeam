@@ -276,6 +276,46 @@ export default function Reconciliation() {
             </Grid>
           )}
 
+          {data.accuracy?.by_category && (
+            <Paper sx={{ p: 3, mb: 2.5 }}>
+              <Typography variant="h6" mb={2}>
+                Accuracy by Exception Category
+              </Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Category</TableCell>
+                      <TableCell align="right">Precision</TableCell>
+                      <TableCell align="right">Recall</TableCell>
+                      <TableCell align="right">F1 Score</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {Object.entries(data.accuracy.by_category)
+                      .filter(([category]) => category !== "matched")
+                      .map(([category, metrics]) => (
+                        <TableRow key={category}>
+                          <TableCell sx={{ textTransform: "capitalize" }}>
+                            {category.replace(/_/g, " ")}
+                          </TableCell>
+                          <TableCell align="right">
+                            {Math.round(metrics.precision * 100)}%
+                          </TableCell>
+                          <TableCell align="right">
+                            {Math.round(metrics.recall * 100)}%
+                          </TableCell>
+                          <TableCell align="right">
+                            {metrics.f1.toFixed(2)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          )}
+
           {/* Chart + AI Summary Row */}
           <Grid container spacing={2.5} mb={2.5}>
             <Grid size={{ xs: 12, md: 5 }}>

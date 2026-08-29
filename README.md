@@ -12,7 +12,7 @@ The 2026 builder consensus is that *verification capacity*, not generation speed
 3. **Persistent Audit Trail**: Every reconciliation run, F1 metrics, and AI rationale is persisted securely to a Postgres database, viewable via the Run History UI. 
 
 ## 🏗️ Architecture
-The reconciliation capability is an AI-assisted finance-ops engine exposed through the same Django API as the rest of the application. It reuses the platform's Gemini integration: a deterministic matching engine catches exact matches, unresolved rows are classified by Gemini through the existing AI service, and Gemini produces an executive summary. Reconciliation is not currently wired into the Nexus specialist registry or Echo memory.
+The reconciliation capability is an AI-assisted finance-ops engine exposed through the same Django API and Nexus routing path as the rest of the application. The registered `Ledger` specialist uses the platform's Gemini integration: a deterministic matching engine catches exact matches, unresolved rows are classified by Gemini through the existing AI service, and Gemini produces an executive summary. Nexus loads and writes Ledger conversation turns through Echo, while the dedicated reconciliation endpoints remain available for the dashboard workflow.
 👉 [View the Full Architecture Diagram](docs/architecture_diagram.md)
 👉 [View the Hackathon Technical & Product Snapshot](docs/project_snapshot.md)
 
@@ -22,7 +22,7 @@ The reconciliation capability is an AI-assisted finance-ops engine exposed throu
 - **AI Engine**: Google Generative AI (Gemini Flash)
 - **Memory**: Embedded Shared Memory (Echo)
 
-Reconciliation has its own run and exception persistence path and is currently separate from the Nexus specialist registry and Echo memory.
+Reconciliation has dedicated run and exception persistence models, and Ledger requests are also recorded in the shared Echo conversation history.
 
 ## 🚀 Getting Started
 Please refer to the [Project Setup Guide](setup.md) for detailed instructions on prerequisites, environment configuration, database migration, and running both the Django backend and the Vite React frontend locally.
@@ -40,5 +40,5 @@ Please refer to the [Project Setup Guide](setup.md) for detailed instructions on
 - `frontend/` - React UI (Reconciliation Dashboard, KPIs).
 - `backend/` - Django configuration.
 - `agents/` - REST API endpoints, AI service logic, and the Reconciliation Engine pipeline.
-- `nexus/` - Orchestration skeleton for agent registry.
+- `nexus/` - Orchestration registry, routing, and registered specialists including Ledger.
 - `echo/` - Context and shared memory engine.

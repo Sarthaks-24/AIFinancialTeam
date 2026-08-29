@@ -1,6 +1,6 @@
 # 05 — Specialists
 
-All six specialists live in [`nexus/specialists/workforce.py`](../nexus/specialists/workforce.py). Each is a Python class that:
+All seven specialists are registered under `nexus/specialists/`. The six general-purpose specialists live in [`nexus/specialists/workforce.py`](../nexus/specialists/workforce.py), and Ledger lives in [`nexus/specialists/reconciliation.py`](../nexus/specialists/reconciliation.py). Each is a Python class that:
 
 1. Inherits from `BaseSpecialist` and is decorated with `@register_specialist`.
 2. Declares metadata (`name`, `domain`, `title`, `description`, `required_groups`, `suggested_prompts`).
@@ -186,6 +186,22 @@ Add `ComplianceRecord` and `PolicyDocument` rows via Django Admin, linked to the
 
 ### Note
 Luna's knowledge base is currently embedded in `workforce.py`. In a future phase, this will be replaced by a proper knowledge-base retrieval system (RAG).
+
+---
+
+## Ledger — AI Reconciliation Controller
+
+**Domain:** `reconciliation`
+**Required groups:** `CFO`, `Finance Manager`
+**Aliases:** `Reconciliation`, `Recon`, `Reconciliation Engine`
+
+### What Ledger does
+- Runs the deterministic settlement-to-ledger matching pipeline.
+- Sends unresolved records to Gemini for exception classification and reasoning.
+- Returns match rate, exception details, runtime accuracy metrics, throughput, and an executive summary.
+- Persists each run to the organization attached to the authenticated user.
+
+Ledger is registered with `@register_specialist` and is reachable through the normal `POST /api/ask/` Nexus route. Nexus loads the user's Echo context before handling the request and writes both the user question and Ledger summary to Echo afterward. The dedicated `POST /api/reconcile/` endpoint remains available for the reconciliation dashboard.
 
 ---
 

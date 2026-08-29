@@ -26,13 +26,19 @@ This document maps the project's phase plan to the current implementation state.
 - Echo is read before every Gemini call (enables follow-up questions)
 - Embedding-based fact retrieval using `text-embedding-004`
 
-### Nexus — Orchestration Skeleton ✅
+### Nexus — Orchestration Platform ✅
 - `BaseSpecialist` ABC in `nexus/specialist.py`
 - `@register_specialist` decorator + registry in `nexus/registry.py`
 - `EchoContext`, `SpecialistResponse` data classes in `nexus/base.py`
 - `route_query()` dispatches via registry (no hardcoded if/elif)
 - `nexus/permissions.py` — specialist-level RBAC
 - LLM-based classification in `nexus/specialists/classify.py`
+
+### Reconciliation Specialist ✅
+- `LedgerAgent` implements `BaseSpecialist` and is registered through `@register_specialist`.
+- `POST /api/ask/` routes directly to Ledger using `specialist: "Ledger"` or an approved alias.
+- Ledger preserves Organization scoping and the dedicated `/api/reconcile/` endpoints.
+- Nexus loads Echo context and persists Ledger user and summary turns in Echo.
 
 ### Voice Pipeline ✅
 - `voice/stt.py` — Gemini multimodal STT
@@ -44,7 +50,7 @@ This document maps the project's phase plan to the current implementation state.
 
 ## Phase 2 — Core Assistants ✅ Complete
 
-All six specialists implemented in `nexus/specialists/workforce.py`:
+All six general-purpose specialists are implemented in `nexus/specialists/workforce.py`, with Ledger implemented in `nexus/specialists/reconciliation.py`:
 
 | Specialist | Status | Data Sources |
 |---|---|---|
@@ -54,8 +60,9 @@ All six specialists implemented in `nexus/specialists/workforce.py`:
 | Aria (Operations Manager) | ✅ Full | Vendor, Contract |
 | Orion (Compliance Officer) | ✅ Full | ComplianceRecord, PolicyDocument |
 | Luna (Product Specialist) | ✅ Built-in knowledge | None (embedded knowledge) |
+| Ledger (Reconciliation Controller) | ✅ Full | Settlement CSV, ledger CSV, ground-truth manifest |
 
-All six:
+All seven:
 - Implement `BaseSpecialist`
 - Are registered in Nexus via `@register_specialist`
 - Read Echo context before Gemini calls
@@ -115,7 +122,7 @@ All six:
 ### Near-term
 1. **Populate Orion and Aria data** — add `ComplianceRecord`, `PolicyDocument`, `Vendor`, `Contract` records via Admin or a data import script. Until then, these specialists return "no data" responses.
 2. **Luna knowledge base** — replace the embedded knowledge strings in `workforce.py` with a proper retrieval-augmented approach (document store, chunking, embedding search).
-3. **Write tests** — `nexus/tests/` directory exists but has minimal coverage. Priority: `route_query()` unit tests, delegation depth tests, Echo write/read round-trip.
+3. **Write tests** — continue expanding `nexus/tests/` coverage for route behavior, delegation depth, and Echo write/read round-trips.
 4. **PR workflow** — document and enforce branching strategy.
 
 ### Medium-term (Phase 4 goals)
@@ -134,7 +141,7 @@ All six:
 
 The AI Financial Workforce is complete when:
 
-- [x] Six specialists, each with distinct domain and persona
+- [x] Seven specialists, each with distinct domain and persona
 - [x] Nexus routes, enforces permissions, transfers scoped context
 - [x] Echo persists turns and facts; specialists use prior context
 - [x] Voice — full STT → Nova → TTS path working

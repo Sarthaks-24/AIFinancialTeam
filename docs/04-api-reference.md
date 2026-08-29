@@ -46,7 +46,7 @@ Main endpoint for text-based queries. Returns a **Server-Sent Events (SSE)** str
 ```json
 {
   "question": "Why are collections falling?",
-  "specialist": "Atlas",          // optional — Nexus classifies if omitted
+  "specialist": "Atlas",          // optional — Nexus classifies if omitted; use "Ledger" for reconciliation
   "conversation_id": 42,          // optional — loads/continues a session
   "companion_mode": false         // optional — enables Ava persona on Atlas
 }
@@ -117,16 +117,30 @@ List all registered specialists the authenticated user can access.
 
 **Auth required:** Yes (IsAuthenticated)
 
+**Response:**
+```json
+[
+  {
+    "name": "Atlas",
 ## Reconciliation
 
-Reconciliation is an AI-assisted finance-operations engine exposed through Django. It reuses the platform's Gemini integration but is not currently registered as a Nexus specialist or connected to Echo memory.
+Reconciliation is available as the registered `Ledger` Nexus specialist and through dedicated Django endpoints. The Ledger route uses the normal Nexus Echo context and turn persistence; the dedicated endpoint remains the dashboard-oriented batch API.
 
-### `POST /api/reconcile/`
-Run reconciliation against the generated Razorpay settlement and internal ledger files.
+### `POST /api/ask/` with `specialist: "Ledger"`
+Run reconciliation through Nexus specialist routing.
 
 **Auth required:** Yes (IsAuthenticated)
 
-**Response:** Includes processed and matched record counts, match rate, processing time, exception details, an AI summary, and runtime accuracy metrics under `accuracy` (`overall` and `by_category`). The overall F1 score is also persisted with the run.
+**Request body:** Uses the standard `/api/ask/` body with `specialist` set to `Ledger` (or `Reconciliation`, `Recon`, or `Reconciliation Engine`).
+
+**Response:** SSE stream containing Ledger metadata, reconciliation metrics, exception details, AI summary, and the final analysis. The request and Ledger summary are persisted in Echo conversation history.
+
+### `POST /api/reconcile/`
+Run reconciliation through the dedicated dashboard endpoint against the generated Razorpay settlement and internal ledger files.
+
+**Auth required:** Yes (IsAuthenticated)
+
+**Response:** Includes processed and matched record counts, match rate, processing time, exception details, an AI summary, and runtime accuracy metrics under `accuracy` (`overall` and `by_category`). The overall F1 score is also persisted with the organization-owned run.
 
 ### `GET /api/reconcile/history/`
 List reconciliation runs for the authenticated user's organization, newest first. Each run includes its related exception records.
@@ -135,11 +149,6 @@ List reconciliation runs for the authenticated user's organization, newest first
 
 **Query parameters:** `page` — optional pagination page number.
 
-**Response:**
-```json
-[
-  {
-    "name": "Atlas",
     "title": "AI Chief of Staff",
     "domain": "executive_intelligence",
     "description": "Executive summaries, business health, and KPI narration.",

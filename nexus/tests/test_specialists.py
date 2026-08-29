@@ -42,11 +42,11 @@ def _make_user(username, groups=None):
 
 
 class RegistrationTests(TestCase):
-    """All six specialists are registered and identifiable."""
+    """All seven specialists are registered and identifiable."""
 
-    def test_six_specialists_registered(self):
+    def test_seven_specialists_registered(self):
         names = {s.name for s in list_specialists()}
-        self.assertEqual(names, {"Atlas", "Vega", "Nova", "Aria", "Orion", "Luna"})
+        self.assertEqual(names, {"Atlas", "Vega", "Nova", "Aria", "Orion", "Luna", "Ledger"})
 
     def test_each_specialist_has_required_fields(self):
         for specialist in list_specialists():
@@ -57,7 +57,7 @@ class RegistrationTests(TestCase):
             self.assertIsInstance(specialist.suggested_prompts, list)
 
     def test_get_specialist_by_name(self):
-        for name in ("Atlas", "Vega", "Nova", "Aria", "Orion", "Luna"):
+        for name in ("Atlas", "Vega", "Nova", "Aria", "Orion", "Luna", "Ledger"):
             specialist = get_specialist(name)
             self.assertIsNotNone(specialist, f"{name} not found via get_specialist")
             self.assertEqual(specialist.name, name)
@@ -254,6 +254,31 @@ class EchoContinuityTests(TestCase):
                 "Conversation context was not passed to ask_specialist",
             )
 
+    @patch("nexus.specialists.reconciliation.run_reconciliation")
+    def test_route_query_reaches_ledger_and_writes_echo_turns(self, mock_reconciliation):
+        mock_reconciliation.return_value = {
+            "total_processed": 60,
+            "exceptions_count": 2,
+            "match_rate_pct": 96.7,
+            "exceptions": [],
+            "ai_summary": "Two exceptions need review.",
+        }
+
+        result = route_query(
+            "Run the latest reconciliation",
+            user=self.user,
+            specialist_name="Ledger",
+            stream=False,
+        )
+
+        self.assertEqual(result["agent"], "Ledger")
+        mock_reconciliation.assert_called_once()
+
+        from echo.models import Conversation, Turn
+
+        conversation = Conversation.objects.get(user=self.user, specialist="Ledger")
+        self.assertEqual(Turn.objects.filter(conversation=conversation).count(), 2)
+
 
 class SpecialistListEndpointTests(TestCase):
     """The /api/specialists/ endpoint returns only permitted specialists."""
@@ -269,12 +294,12 @@ class SpecialistListEndpointTests(TestCase):
         token = RefreshToken.for_user(user)
         self.client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {token.access_token}"
 
-    def test_cfo_sees_all_six(self):
+    def test_cfo_sees_all_seven(self):
         self._login(self.cfo)
         response = self.client.get("/api/specialists/")
         self.assertEqual(response.status_code, 200)
         names = {s["name"] for s in response.json()}
-        self.assertEqual(names, {"Atlas", "Vega", "Nova", "Aria", "Orion", "Luna"})
+        self.assertEqual(names, {"Atlas", "Vega", "Nova", "Aria", "Orion", "Luna", "Ledger"})
 
     def test_viewer_sees_only_luna(self):
         self._login(self.viewer)
