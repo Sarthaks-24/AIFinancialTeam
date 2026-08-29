@@ -74,7 +74,14 @@ The backend is built with Django, Django REST Framework, and integrates with Goo
    ```
    The backend should now be running on `http://127.0.0.1:8000/`.
 
-8. **Access the Admin Panel**: With the development server running, navigate to [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin) in your browser. Log in using the superuser credentials you created in Step 6 to view and manage your data.
+8. Optional validation checks:
+   ```bash
+   .\.venv\Scripts\python.exe manage.py spectacular --file schema.yml
+   .\.venv\Scripts\python.exe manage.py test
+   ```
+   These commands generate the OpenAPI schema and run the complete backend test suite. The project is currently validated with these exact commands.
+
+9. **Access the Admin Panel**: With the development server running, navigate to [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin) in your browser. Log in using the superuser credentials you created in Step 6 to view and manage your data.
 
 ---
 

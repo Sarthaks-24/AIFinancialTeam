@@ -27,6 +27,16 @@ Reconciliation has dedicated run and exception persistence models, and Ledger re
 ## 🚀 Getting Started
 Please refer to the [Project Setup Guide](setup.md) for detailed instructions on prerequisites, environment configuration, database migration, and running both the Django backend and the Vite React frontend locally.
 
+### Validation commands
+The project has been verified with these commands from the repo root using the virtual environment:
+
+```bash
+.\.venv\Scripts\python.exe manage.py spectacular --file schema.yml
+.\.venv\Scripts\python.exe manage.py test
+```
+
+This generates the OpenAPI schema at [schema.yml](schema.yml) and runs the full backend test suite.
+
 ### Running the Reconciliation
 1. Generate the synthetic test data:
    ```bash

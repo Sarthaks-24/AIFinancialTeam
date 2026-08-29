@@ -1,0 +1,613 @@
+openapi: 3.0.3
+info:
+  title: AI Financial Team API
+  version: 1.0.0
+  description: REST APIs for AI Financial Team
+paths:
+  /api/ask/:
+    post:
+      operationId: ask_create
+      tags:
+      - ask
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskAgent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AskAgent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AskAgent'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/conversations/:
+    get:
+      operationId: conversation_list
+      tags:
+      - conversations
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+    post:
+      operationId: conversation_create
+      tags:
+      - conversations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: {}
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/conversations/{conversation_id}/:
+    get:
+      operationId: conversation_detail
+      parameters:
+      - in: path
+        name: conversation_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - conversations
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/conversations/{conversation_id}/archive/:
+    post:
+      operationId: conversations_archive_create
+      parameters:
+      - in: path
+        name: conversation_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - conversations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: {}
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/dashboard/:
+    get:
+      operationId: dashboard_retrieve
+      tags:
+      - dashboard
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/financial-data/:
+    get:
+      operationId: financial_data_retrieve
+      tags:
+      - financial-data
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialMetric'
+          description: ''
+    put:
+      operationId: financial_data_update
+      tags:
+      - financial-data
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinancialMetric'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FinancialMetric'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FinancialMetric'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialMetric'
+          description: ''
+  /api/financial-data/months/:
+    get:
+      operationId: financial_data_months_retrieve
+      tags:
+      - financial-data
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/history/:
+    get:
+      operationId: history_retrieve
+      tags:
+      - history
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/kpis/:
+    get:
+      operationId: kpis_retrieve
+      tags:
+      - kpis
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/query-history/:
+    get:
+      operationId: query_history_retrieve
+      tags:
+      - query-history
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/reconcile/:
+    post:
+      operationId: reconcile_create
+      description: Run the AI reconciliation engine over settlement + ledger data.
+      tags:
+      - reconcile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: {}
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/reconcile/history/:
+    get:
+      operationId: reconcile_history_retrieve
+      tags:
+      - reconcile
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/reports/:
+    get:
+      operationId: reports_retrieve
+      tags:
+      - reports
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/specialists/:
+    get:
+      operationId: specialists_retrieve
+      description: Return the Phase 2 specialists available to the current user.
+      tags:
+      - specialists
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/task/:
+    get:
+      operationId: task_retrieve
+      tags:
+      - task
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/tasks/:
+    get:
+      operationId: tasks_retrieve
+      tags:
+      - tasks
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/tasks/update/:
+    post:
+      operationId: tasks_update_create
+      tags:
+      - tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: {}
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/token/:
+    post:
+      operationId: token_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPair'
+        required: true
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomTokenObtainPair'
+          description: ''
+  /api/token/refresh/:
+    post:
+      operationId: token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/upload/:
+    post:
+      operationId: upload_create
+      tags:
+      - upload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: {}
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/voice/ask/:
+    post:
+      operationId: voice_ask_create
+      description: 'Phase 1 voice round-trip: audio → Nova → spoken reply.'
+      tags:
+      - voice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: {}
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+components:
+  schemas:
+    AskAgent:
+      type: object
+      properties:
+        question:
+          type: string
+          maxLength: 500
+        specialist:
+          type: string
+          maxLength: 100
+        conversation_id:
+          type: integer
+          minimum: 1
+        companion_mode:
+          type: boolean
+          default: false
+      required:
+      - question
+    CustomTokenObtainPair:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - password
+      - username
+    FinancialMetric:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        month:
+          type: string
+          maxLength: 50
+        revenue:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,13}(?:\.\d{0,2})?$
+        expenses:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,13}(?:\.\d{0,2})?$
+        ebitda:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,13}(?:\.\d{0,2})?$
+        cash_position:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,13}(?:\.\d{0,2})?$
+        budget:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,13}(?:\.\d{0,2})?$
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        organization:
+          type: integer
+          readOnly: true
+          nullable: true
+      required:
+      - cash_position
+      - created_at
+      - ebitda
+      - expenses
+      - id
+      - month
+      - organization
+      - revenue
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - access
+      - refresh
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
