@@ -8,6 +8,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from .models import FinancialMetric, FinancialUpload, QueryLog, Task
 from .pagination import CustomPagination
@@ -36,6 +38,7 @@ from echo import service as echo
 logger = logging.getLogger(__name__)
 
 
+@extend_schema(request=AskAgentSerializer, responses=OpenApiTypes.OBJECT)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def ask_agent(request):
@@ -163,6 +166,8 @@ def _conversation_payload(conversation, include_turns=False):
     return payload
 
 
+@extend_schema(methods=["GET"], responses=OpenApiTypes.OBJECT, operation_id="conversation_list")
+@extend_schema(methods=["POST"], request=OpenApiTypes.OBJECT, responses=OpenApiTypes.OBJECT, operation_id="conversation_create")
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def conversations(request):
@@ -179,6 +184,7 @@ def conversations(request):
     return paginator.get_paginated_response([_conversation_payload(item) for item in page])
 
 
+@extend_schema(responses=OpenApiTypes.OBJECT, operation_id="conversation_detail")
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def conversation_detail(request, conversation_id):
@@ -188,6 +194,7 @@ def conversation_detail(request, conversation_id):
     return Response(_conversation_payload(conversation, include_turns=True))
 
 
+@extend_schema(request=OpenApiTypes.OBJECT, responses=OpenApiTypes.OBJECT)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def archive_conversation(request, conversation_id):
@@ -196,6 +203,7 @@ def archive_conversation(request, conversation_id):
         return Response({"detail": "Conversation not found."}, status=status.HTTP_404_NOT_FOUND)
     return Response(_conversation_payload(conversation))
 
+@extend_schema(request=OpenApiTypes.OBJECT, responses=OpenApiTypes.OBJECT)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def voice_ask(request):
@@ -236,6 +244,7 @@ def voice_ask(request):
     return Response(outcome)
 
 
+@extend_schema(request=OpenApiTypes.OBJECT, responses=OpenApiTypes.OBJECT)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def specialist_list(request):
@@ -253,6 +262,7 @@ def specialist_list(request):
     ])
 
 
+@extend_schema(request=OpenApiTypes.OBJECT, responses=OpenApiTypes.OBJECT)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def query_history(request):
@@ -265,6 +275,7 @@ def query_history(request):
     return Response(serializer.data)
 
 
+@extend_schema(responses=OpenApiTypes.OBJECT)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def task_list(request):
@@ -277,6 +288,7 @@ def task_list(request):
     return Response(serializer.data)
 
 
+@extend_schema(request=OpenApiTypes.OBJECT, responses=OpenApiTypes.OBJECT)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def update_task_status(request):
@@ -304,6 +316,7 @@ def update_task_status(request):
         )
 
 
+@extend_schema(responses=OpenApiTypes.OBJECT)
 @api_view(["GET"])
 @permission_classes([IsCFOOrAdmin])
 def dashboard_view(request):
@@ -313,6 +326,7 @@ def dashboard_view(request):
     return Response(data)
 
 
+@extend_schema(responses=OpenApiTypes.OBJECT)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def history_view(request):
@@ -322,6 +336,7 @@ def history_view(request):
     return Response(data)
 
 
+@extend_schema(responses=OpenApiTypes.OBJECT)
 @api_view(["GET"])
 @permission_classes([IsAuditorOrAdmin])
 def report_view(request):
@@ -331,6 +346,7 @@ def report_view(request):
     return Response(data)
 
 
+@extend_schema(responses=OpenApiTypes.OBJECT)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def task_view(request):
@@ -366,6 +382,7 @@ def task_view(request):
 
     return paginator.get_paginated_response(serializer.data)
 
+@extend_schema(responses=OpenApiTypes.OBJECT)
 @api_view(["GET"])
 @permission_classes([IsFinanceManagerOrAdmin])
 def kpi_view(request):
@@ -374,6 +391,7 @@ def kpi_view(request):
 
     return Response(data)
 
+@extend_schema(responses=OpenApiTypes.OBJECT)
 @api_view(["GET"])
 @permission_classes([IsFinanceManagerOrAdmin])
 def financial_months_view(request):
@@ -384,6 +402,7 @@ def financial_months_view(request):
     return Response(serializer.data)
 
 
+@extend_schema(request=FinancialMetricSerializer, responses=FinancialMetricSerializer)
 @api_view(["GET", "PUT"])
 @permission_classes([IsFinanceManagerOrAdmin])
 def financial_data_view(request):
@@ -416,6 +435,7 @@ def financial_data_view(request):
 
     return Response(serializer.data)
 
+@extend_schema_view(post=extend_schema(request=OpenApiTypes.OBJECT, responses=OpenApiTypes.OBJECT))
 class FinancialUploadAPIView(APIView):
 
     permission_classes = [IsFinanceManagerOrAdmin]
@@ -543,6 +563,7 @@ class FinancialUploadAPIView(APIView):
         )
 
 
+@extend_schema(request=OpenApiTypes.OBJECT, responses=OpenApiTypes.OBJECT)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def reconcile_view(request):
@@ -568,6 +589,7 @@ def reconcile_view(request):
 from .models import ReconciliationRun
 from .serializers import ReconciliationRunSerializer
 
+@extend_schema(responses=OpenApiTypes.OBJECT)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def reconcile_history_view(request):

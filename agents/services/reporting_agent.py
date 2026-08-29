@@ -11,16 +11,16 @@ from .treasury_agent import analyze_cash
 logger = logging.getLogger(__name__)
 
 
-def generate_report(question):
+def generate_report(question, organization=None):
 
     # Pass "dashboard" so these three skip their own Gemini call — we only
     # need their structured numbers and charts here, since this agent
     # writes its own single AI narrative below.
-    finance_data = analyze_finance("dashboard")
-    treasury_data = analyze_cash("dashboard")
-    budget_data = analyze_budget("dashboard")
+    finance_data = analyze_finance("dashboard", organization=organization)
+    treasury_data = analyze_cash("dashboard", organization=organization)
+    budget_data = analyze_budget("dashboard", organization=organization)
 
-    records = FinancialMetric.objects.order_by("-created_at")[:2]
+    records = FinancialMetric.objects.filter(organization=organization).order_by("-created_at")[:2]
 
     if records.count() < 2:
         revenue_change = 0
@@ -133,12 +133,13 @@ and budget discipline.
     # Execution Layer
     # -------------------------
 
-    execution_result = create_tasks(actions) if actions else {
+    execution_result = create_tasks(actions, organization=organization) if actions else {
         "agent": "Execution Agent",
         "tasks_created": []
     }
 
     Report.objects.create(
+        organization=organization,
         report_type="Executive Financial Report",
         summary=executive_summary
     )

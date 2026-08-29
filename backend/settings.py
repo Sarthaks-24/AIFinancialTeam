@@ -29,6 +29,8 @@ if DJANGO_ENV == "production":
     DEBUG = False
     if not ALLOWED_HOSTS:
         raise ValueError("Django_ALLOWED_HOSTS must be set in production")
+    if not SECRET_KEY or len(SECRET_KEY) < 50:
+        raise ValueError("Django_KEY must be at least 50 characters in production")
 
 
 INSTALLED_APPS = [
@@ -122,6 +124,15 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+if DJANGO_ENV == "production":
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CORS_ALLOW_HEADERS = [
     "accept",

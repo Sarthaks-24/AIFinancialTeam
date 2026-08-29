@@ -18,8 +18,8 @@ def get_kpis(user):
             "budget_status": "Unknown",
         }
 
-    treasury = analyze_cash("kpi")
-    budget = analyze_budget("kpi")
+    treasury = analyze_cash("kpi", organization=org)
+    budget = analyze_budget("kpi", organization=org)
 
     return {
         "revenue": float(latest.revenue),

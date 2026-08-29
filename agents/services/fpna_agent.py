@@ -8,9 +8,9 @@ logger = logging.getLogger(__name__)
 SYSTEM_CONTEXTS = {"kpi", "dashboard"}
 
 
-def analyze_finance(question):
+def analyze_finance(question, organization=None):
 
-    records = FinancialMetric.objects.order_by("created_at")
+    records = FinancialMetric.objects.filter(organization=organization).order_by("created_at")
 
     if not records.exists():
         return {

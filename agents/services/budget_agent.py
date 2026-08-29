@@ -8,9 +8,10 @@ logger = logging.getLogger(__name__)
 SYSTEM_CONTEXTS = {"kpi", "dashboard"}
 
 
-def analyze_budget(question):
+def analyze_budget(question, organization=None):
 
-    latest_record = FinancialMetric.objects.order_by("-created_at").first()
+    records = FinancialMetric.objects.filter(organization=organization).order_by("created_at")
+    latest_record = records.last()
 
     if not latest_record:
         return {
@@ -54,8 +55,6 @@ def analyze_budget(question):
         "analysis": analysis,
         "recommendation": recommendation
     }
-
-    records = FinancialMetric.objects.order_by("created_at")
 
     if records.count() > 1:
         result["chart"] = {

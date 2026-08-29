@@ -1,9 +1,9 @@
 from agents.models import FinancialMetric
 
 
-def analyze_financial_health(question):
+def analyze_financial_health(question, organization=None):
 
-    records = FinancialMetric.objects.order_by("-created_at")[:2]
+    records = FinancialMetric.objects.filter(organization=organization).order_by("-created_at")[:2]
 
     if len(records) < 2:
         return {

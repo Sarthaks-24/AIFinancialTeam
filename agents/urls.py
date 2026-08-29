@@ -24,8 +24,8 @@ from .views import (
 
 urlpatterns = [
     path("ask/", ask_agent),
-    path("conversations/", conversations),
-    path("conversations/<int:conversation_id>/", conversation_detail),
+    path("conversations/", conversations, name="conversation-list"),
+    path("conversations/<int:conversation_id>/", conversation_detail, name="conversation-detail"),
     path("conversations/<int:conversation_id>/archive/", archive_conversation),
     path("specialists/", specialist_list),
     path("voice/ask/", voice_ask),

@@ -33,9 +33,9 @@ def get_dashboard_data(user):
     # ----------------------------
     # Other Agents
     # ----------------------------
-    treasury = analyze_cash("dashboard")
-    budget = analyze_budget("dashboard")
-    health = analyze_financial_health("dashboard")
+    treasury = analyze_cash("dashboard", organization=org)
+    budget = analyze_budget("dashboard", organization=org)
+    health = analyze_financial_health("dashboard", organization=org)
 
     # ----------------------------
     # Reports & Tasks

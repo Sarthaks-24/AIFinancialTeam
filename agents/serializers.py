@@ -38,6 +38,7 @@ class FinancialMetricSerializer(serializers.ModelSerializer):
     class Meta:
         model = FinancialMetric
         fields = "__all__"
+        read_only_fields = ("organization",)
 
 
 
