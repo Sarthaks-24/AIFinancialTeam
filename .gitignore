@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+env/
+
+# Environment
+.env
+backend/.env
+frontend/.env
+
+# Django
+db.sqlite3
+staticfiles/
+media/
+financial_uploads/
+
+# Node / React
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+.venv
+cache

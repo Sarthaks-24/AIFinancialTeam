@@ -1,0 +1,41 @@
+from django.urls import path
+
+from .views import (
+    FinancialUploadAPIView,
+    archive_conversation,
+    ask_agent,
+    conversation_detail,
+    conversations,
+    dashboard_view,
+    financial_data_view,
+    financial_months_view,
+    history_view,
+    kpi_view,
+    query_history,
+    report_view,
+    specialist_list,
+    task_list,
+    task_view,
+    update_task_status,
+    voice_ask,
+)
+
+urlpatterns = [
+    path("ask/", ask_agent),
+    path("conversations/", conversations),
+    path("conversations/<int:conversation_id>/", conversation_detail),
+    path("conversations/<int:conversation_id>/archive/", archive_conversation),
+    path("specialists/", specialist_list),
+    path("voice/ask/", voice_ask),
+    path("query-history/", query_history),
+    path("task/", task_list),
+    path("tasks/update/", update_task_status),
+    path("dashboard/", dashboard_view),
+    path("history/", history_view),
+    path("reports/", report_view),
+    path("tasks/", task_view),
+    path("kpis/", kpi_view),
+    path("financial-data/", financial_data_view),
+    path("financial-data/months/", financial_months_view),
+    path("upload/", FinancialUploadAPIView.as_view(), name="upload-financial-data"),
+]
