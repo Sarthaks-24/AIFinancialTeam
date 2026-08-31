@@ -28,6 +28,8 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import SpeedIcon from "@mui/icons-material/Speed";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import InsightsIcon from "@mui/icons-material/Insights";
+import VerifiedIcon from "@mui/icons-material/Verified";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
   PieChart,
   Pie,
@@ -72,8 +74,8 @@ export default function Reconciliation() {
     try {
       const res = await getReconciliationHistory(p);
       setHistory(res);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // silently ignore history fetch errors
     } finally {
       setHistoryLoading(false);
     }
@@ -256,6 +258,14 @@ export default function Reconciliation() {
               />
             </Grid>
           </Grid>
+
+          {/* Architecture Safety Banner */}
+          <Alert severity="info" sx={{ mb: 2.5 }} icon={<InfoOutlinedIcon />}>
+            <Typography variant="body2">
+              <strong>How it works:</strong> Deterministic engine handles exact matching and financial calculations.
+              AI is used only to classify and explain unresolved exceptions. AI cannot mutate financial state.
+            </Typography>
+          </Alert>
 
           {/* AI Accuracy Metrics Cards */}
           {data.accuracy?.overall && (
@@ -444,6 +454,8 @@ export default function Reconciliation() {
                         Delta
                       </TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>AI Reasoning</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Ground Truth</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Eval</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -520,6 +532,35 @@ export default function Reconciliation() {
                           <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 320 }}>
                             {exc.ai_reasoning}
                           </Typography>
+                        </TableCell>
+                        <TableCell>
+                          {exc.ground_truth_type ? (
+                            <Chip
+                              label={exc.ground_truth_type.replace(/_/g, " ")}
+                              size="small"
+                              sx={{
+                                fontWeight: 600,
+                                bgcolor: (EXCEPTION_COLORS[exc.ground_truth_type] || "#616161") + "18",
+                                color: EXCEPTION_COLORS[exc.ground_truth_type] || "#616161",
+                                textTransform: "capitalize",
+                              }}
+                            />
+                          ) : (
+                            <Typography variant="caption" color="text.secondary">—</Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {exc.is_correct != null ? (
+                            <Chip
+                              icon={exc.is_correct ? <VerifiedIcon /> : <ErrorOutlineIcon />}
+                              label={exc.is_correct ? "Correct" : "Incorrect"}
+                              size="small"
+                              color={exc.is_correct ? "success" : "error"}
+                              variant="outlined"
+                            />
+                          ) : (
+                            <Typography variant="caption" color="text.secondary">—</Typography>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

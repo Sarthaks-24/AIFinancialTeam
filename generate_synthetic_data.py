@@ -53,48 +53,59 @@ def inject_discrepancies(records: list, num_discrepancies: int):
     random.shuffle(indices)
     targets = indices[:num_discrepancies]
     discrepancy_map = {}
-    
-    parts = 6
-    chunk = num_discrepancies // parts
-    
+
+    # Explicit allocation: spread evenly across 5 types, remainder goes to amount_mismatch
+    # Types: amount_mismatch, missing_in_ledger, missing_in_settlement, date_mismatch, unresolvable
+    # For unresolvable: alternate between duplicate-ledger and invalid-settlement mechanisms
+    base_per_type = num_discrepancies // 5
+    remainder = num_discrepancies % 5
+
+    allocation = {
+        "amount_mismatch": base_per_type + (1 if remainder > 0 else 0),
+        "missing_in_ledger": base_per_type + (1 if remainder > 1 else 0),
+        "missing_in_settlement": base_per_type + (1 if remainder > 2 else 0),
+        "date_mismatch": base_per_type + (1 if remainder > 3 else 0),
+        "unresolvable": base_per_type,
+    }
+
+    offset = 0
+
     # 1. Amount mismatches
-    for idx in targets[:chunk]:
+    for idx in targets[offset:offset + allocation["amount_mismatch"]]:
         drift = round(random.uniform(5, 500), 2) * random.choice([1, -1])
         records[idx]["ledger_amount_override"] = round(records[idx]["amount"] + drift, 2)
         discrepancy_map[records[idx]["index"]] = "amount_mismatch"
-        
+    offset += allocation["amount_mismatch"]
+
     # 2. Missing in ledger
-    for idx in targets[chunk:2*chunk]:
+    for idx in targets[offset:offset + allocation["missing_in_ledger"]]:
         records[idx]["skip_ledger"] = True
         discrepancy_map[records[idx]["index"]] = "missing_in_ledger"
-        
+    offset += allocation["missing_in_ledger"]
+
     # 3. Missing in settlement
-    for idx in targets[2*chunk:3*chunk]:
+    for idx in targets[offset:offset + allocation["missing_in_settlement"]]:
         records[idx]["skip_settlement"] = True
         discrepancy_map[records[idx]["index"]] = "missing_in_settlement"
-        
+    offset += allocation["missing_in_settlement"]
+
     # 4. Date mismatches
-    for idx in targets[3*chunk:4*chunk]:
+    for idx in targets[offset:offset + allocation["date_mismatch"]]:
         records[idx]["ledger_date_override"] = records[idx]["date"] + timedelta(days=random.randint(4, 12))
         discrepancy_map[records[idx]["index"]] = "date_mismatch"
+    offset += allocation["date_mismatch"]
 
-    # 5. Duplicate references (Ledger has duplicate)
-    for idx in targets[4*chunk:5*chunk]:
-        records[idx]["duplicate_ledger"] = True
+    # 5. Unresolvable — split between duplicate-ledger and invalid-settlement
+    unresolvable_targets = targets[offset:offset + allocation["unresolvable"]]
+    for i, idx in enumerate(unresolvable_targets):
+        if i % 2 == 0:
+            records[idx]["duplicate_ledger"] = True
+        else:
+            records[idx]["invalid_settlement"] = True
         discrepancy_map[records[idx]["index"]] = "unresolvable"
-        
-    # 6. Invalid inputs (missing amount in settlement)
-    for idx in targets[5*chunk:]:
-        records[idx]["invalid_settlement"] = True
-        discrepancy_map[records[idx]["index"]] = "unresolvable"
-
-    # Any remaining will be amount mismatches (remainder handling)
-    for idx in targets[6*chunk:]:
-        drift = round(random.uniform(5, 500), 2) * random.choice([1, -1])
-        records[idx]["ledger_amount_override"] = round(records[idx]["amount"] + drift, 2)
-        discrepancy_map[records[idx]["index"]] = "amount_mismatch"
 
     return discrepancy_map
+
 
 def write_settlements_csv(records: list, path: str):
     fieldnames = ["txn_id", "order_id", "amount", "fee", "tax", "net_amount", "settled_at", "merchant_ref"]

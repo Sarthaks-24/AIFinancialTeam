@@ -27,6 +27,10 @@ REQUIRED_SETTLEMENT_COLUMNS = {
 REQUIRED_LEDGER_COLUMNS = {
     "reference", "amount", "date",
 }
+VALID_EXCEPTION_CATEGORIES = {
+    "amount_mismatch", "date_mismatch", "missing_in_ledger",
+    "missing_in_settlement", "unresolvable",
+}
 
 
 def _load_data(data_dir=DATA_DIR):
@@ -264,9 +268,12 @@ def _ai_classify_exceptions(unresolved: list[dict]) -> list[dict]:
         classification_source = "deterministic" if is_deterministic else "ai"
         confidence = None if is_deterministic else ai.get("confidence", 0.5)
         
+        ai_type = ai.get("type", row["hint"])
+        if ai_type not in VALID_EXCEPTION_CATEGORIES:
+            ai_type = row["hint"]
         enriched.append({
             "txn_id": row["txn_id"],
-            "type": ai.get("type", row["hint"]),
+            "type": ai_type,
             "settlement_amount": row["settlement_amount"],
             "ledger_amount": row["ledger_amount"],
             "settlement_date": row["settlement_date"],
@@ -340,16 +347,23 @@ def _evaluate_accuracy(exceptions: list[dict], data_dir=DATA_DIR) -> dict:
             "f1": round(f1, 4),
         }
 
-    total_correct = sum(
-        predictions.get(txn_id, "matched") == actual
-        for txn_id, actual in ground_truth.items()
-    )
-    overall = total_correct / len(ground_truth) if ground_truth else 0
+    # Remove 'matched' from by_category — it's not an AI classification task
+    by_category.pop("matched", None)
+
+    # Macro-averaged overall metrics from exception categories only
+    exception_categories = [m for m in by_category.values()]
+    if exception_categories:
+        macro_precision = sum(m["precision"] for m in exception_categories) / len(exception_categories)
+        macro_recall = sum(m["recall"] for m in exception_categories) / len(exception_categories)
+        macro_f1 = sum(m["f1"] for m in exception_categories) / len(exception_categories)
+    else:
+        macro_precision = macro_recall = macro_f1 = 0
+
     return {
         "overall": {
-            "precision": round(overall, 4),
-            "recall": round(overall, 4),
-            "f1": round(overall, 4),
+            "precision": round(macro_precision, 4),
+            "recall": round(macro_recall, 4),
+            "f1": round(macro_f1, 4),
         },
         "by_category": by_category,
     }
@@ -446,6 +460,8 @@ def run_reconciliation(organization=None, data_dir=DATA_DIR, dataset_name="canon
         tid = e["txn_id"]
         ptype = e["type"]
         gtype = ground_truth.get(tid, "matched")
+        e["ground_truth_type"] = gtype
+        e["is_correct"] = (ptype == gtype)
         
         exc_objects.append(ReconciliationException(
             run=run_obj,

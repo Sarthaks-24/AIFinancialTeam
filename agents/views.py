@@ -570,12 +570,24 @@ def reconcile_view(request):
     """Run the AI reconciliation engine over settlement + ledger data."""
     from .services.reconciliation_service import run_reconciliation
     import os
+    import re
     from django.conf import settings
 
     try:
         organization = request.user.profile.organization
         dataset_name = request.data.get("dataset_name", "canonical_60")
+        if not re.match(r'^[a-zA-Z0-9_-]+$', dataset_name):
+            return Response(
+                {"error": "Invalid dataset name."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         data_dir = os.path.join(settings.BASE_DIR, "reconciliation_data", dataset_name)
+        expected_prefix = os.path.realpath(os.path.join(settings.BASE_DIR, "reconciliation_data"))
+        if not os.path.realpath(data_dir).startswith(expected_prefix):
+            return Response(
+                {"error": "Invalid dataset name."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         
         result = run_reconciliation(
             organization=organization, 

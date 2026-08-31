@@ -152,11 +152,11 @@ Run reconciliation through Nexus specialist routing.
 **Response:** SSE stream containing Ledger metadata, reconciliation metrics, exception details, AI summary, and the final analysis. The request and Ledger summary are persisted in Echo conversation history.
 
 ### `POST /api/reconcile/`
-Run reconciliation through the direct dashboard endpoint against the generated Razorpay settlement and internal ledger files.
+Run reconciliation through the direct dashboard endpoint against the generated Razorpay settlement and internal ledger files. The `dataset_name` passed is validated securely to prevent relative path traversal out of the `reconciliation_data` directory.
 
 **Auth required:** Yes (IsAuthenticated)
 
-**Response:** Includes processed and matched record counts, match rate, processing time, exception details, an AI summary, and runtime accuracy metrics under `accuracy` (`overall` and `by_category`). The overall F1 score is also persisted with the organization-owned run.
+**Response:** Includes processed and matched record counts, match rate, processing time, exception details, an AI summary, and runtime accuracy metrics under `accuracy` (`overall` and `by_category`). The overall F1 score is strictly macro-averaged, and the exception array includes enriched `ground_truth_type` and `is_correct` validation fields to power the dashboard's audit table.
 
 ### `GET /api/reconcile/history/`
 List reconciliation runs for the authenticated user's organization, newest first. Each run includes its related exception records.

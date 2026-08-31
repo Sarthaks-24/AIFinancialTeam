@@ -158,8 +158,42 @@ Policy documents linked to compliance records (used by Orion).
 | `organization` | FK → Organization | |
 | `compliance_record` | FK → ComplianceRecord (nullable) | `related_name="policies"` |
 | `title` | CharField(255) | |
-| `full_text` | TextField | Full policy text fed to Orion's Gemini prompt |
 | `last_updated` | DateTimeField | Auto |
+
+### `ReconciliationRun`
+
+Tracks a batch execution of the deterministic + AI reconciliation engine.
+
+| Field | Type | Notes |
+|---|---|---|
+| `organization` | FK → Organization | |
+| `dataset_name` | CharField(100) | e.g. `canonical_60` |
+| `total_records` | IntegerField | |
+| `matched_records` | IntegerField | |
+| `exceptions_count` | IntegerField | |
+| `overall_f1_score` | FloatField (nullable) | Macro-averaged F1 score |
+| `processing_time_ms` | IntegerField | |
+| `run_at` | DateTimeField | Auto |
+
+### `ReconciliationException`
+
+Tracks individual unresolved records classified by the AI.
+
+| Field | Type | Notes |
+|---|---|---|
+| `run` | FK → ReconciliationRun | `related_name="exceptions"` |
+| `txn_id` | CharField(100) | |
+| `exception_type` | CharField(50) | e.g., `amount_mismatch` |
+| `confidence` | FloatField (nullable) | From Gemini |
+| `settlement_amount` | DecimalField(15,2) (nullable) | |
+| `ledger_amount` | DecimalField(15,2) (nullable) | |
+| `settlement_date` | DateField (nullable) | |
+| `ledger_date` | DateField (nullable) | |
+| `delta` | DecimalField(15,2) (nullable) | |
+| `ai_reasoning` | TextField | |
+| `classification_source` | CharField(20) | `ai` or `deterministic` |
+| `ground_truth_type` | CharField(50) (nullable) | Injected ground truth label |
+| `is_correct` | BooleanField (nullable) | Eval: `exception_type == ground_truth_type` |
 
 ---
 
@@ -232,6 +266,8 @@ User ──────────── UserProfile ──── Organization
           └── Contract
         ComplianceRecord
           └── PolicyDocument
+        ReconciliationRun
+          └── ReconciliationException
 ```
 
 ---

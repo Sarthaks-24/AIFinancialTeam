@@ -29,9 +29,10 @@ Persistent Audit Trail
 ```
 
 ### The Core Promise
-- **Deterministic engine** handles exact matches — ensuring financial correctness is never delegated to the LLM
-- **AI classification** resolves ambiguous cases — date offsets, amount mismatches, missing records — with explicit reasoning
-- **Honest failure modes** — records that cannot be confidently classified remain marked as exceptions for manual review
+- **Safety First (Deterministic Engine)**: Handles all exact matching and financial arithmetic. The LLM is never permitted to mutate financial state or compute balances.
+- **AI Classification**: Resolves ambiguous cases (date offsets, amount mismatches) with explicit reasoning.
+- **Honest Failure Modes**: Records that resist classification are marked as "unresolvable" — no hallucinatory guesses.
+- **Rigorous Evaluation**: AI accuracy is continuously measured using proper macro-averaged Precision, Recall, and F1 scores against synthetic ground truth, not just simple accuracy.
 
 ## 🏗️ Architecture
 The reconciliation capability is an AI-assisted finance-ops engine exposed through the same Django API and Nexus routing path as the rest of the application. The registered `Ledger` specialist uses the platform's Gemini integration: a deterministic matching engine catches exact matches, unresolved rows are classified by Gemini through the existing AI service, and Gemini produces an executive summary. Nexus loads and writes Ledger conversation turns through Echo. `POST /api/ask/` with Ledger and `POST /api/reconcile/` are two entry points to the same engine: the former provides conversational specialist routing, while the latter supports the dashboard's direct batch workflow, so neither is redundant.
@@ -59,14 +60,17 @@ The project has been verified with these commands from the repo root using the v
 
 This generates the OpenAPI schema at [schema.yml](schema.yml) and runs the full backend test suite.
 
-### Running the Reconciliation
+### 5-Minute Razorpay Hackathon Demo
 1. Generate the synthetic test data:
    ```bash
-   python generate_synthetic_data.py
+   python generate_synthetic_data.py --batch canonical_60
    ```
-   This generates 60 synthetic records and intentionally injects 10 discrepancies (amount mismatches, date mismatches, missing records). 
-2. Start the Backend and Frontend.
-3. Navigate to the **Reconciliation Engine** page in the dashboard and click *Run Reconciliation*.
+   This generates 60 synthetic records with a clean distribution: 50 matched, 10 exceptions (2 per category). A ground truth file is strictly maintained for evaluation.
+2. Start the Backend: `.\.venv\Scripts\python.exe manage.py runserver`
+3. Start the Frontend: `cd frontend && npm run dev`
+4. Navigate to the **Reconciliation Engine** page in the dashboard.
+5. Click **Run Reconciliation** — observe throughput, AI classification (with confidence scoring), and the rigorous macro-averaged evaluation metrics.
+6. Inspect the Exception Table to see deterministic vs. AI classifications side-by-side with ground-truth correctness validation.
 
 ## 📂 Project Structure
 - `frontend/` - React UI (Reconciliation Dashboard, KPIs).

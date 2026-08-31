@@ -51,8 +51,8 @@ class ReconciliationExceptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReconciliationException
         fields = ['id', 'txn_id', 'exception_type', 'confidence', 'settlement_amount', 
-                  'ledger_amount', 'delta', 'ai_reasoning', 'classification_source', 
-                  'ground_truth_type', 'is_correct']
+                  'ledger_amount', 'settlement_date', 'ledger_date', 'delta', 'ai_reasoning',
+                  'classification_source', 'ground_truth_type', 'is_correct']
 
 class ReconciliationRunSerializer(serializers.ModelSerializer):
     exceptions = ReconciliationExceptionSerializer(many=True, read_only=True)
