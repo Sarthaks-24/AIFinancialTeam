@@ -93,9 +93,10 @@ ai-financial-team-working/
 │   ├── delegation.py            # delegate() — cross-specialist handoffs
 │   ├── permissions.py           # user_can_access() — specialist-level RBAC
 │   └── specialists/
-│       ├── __init__.py          # Imports workforce module to trigger registration
+│       ├── __init__.py          # Imports workforce and reconciliation to trigger registration
 │       ├── classify.py          # classify_specialist(), is_follow_up(), has_explicit_intent()
-│       └── workforce.py         # All six specialist implementations
+│       ├── workforce.py         # Six general-purpose specialists (Atlas, Vega, Nova, Aria, Orion, Luna)
+│       └── reconciliation.py    # Ledger specialist (Reconciliation Controller)
 │
 ├── voice/                       # Voice pipeline
 │   ├── service.py               # ask_with_voice() — full STT→specialist→TTS orchestration

@@ -15,9 +15,10 @@ nexus/
 ├── delegation.py    # delegate() — cross-specialist handoffs
 ├── permissions.py   # user_can_access() — specialist-level RBAC
 └── specialists/
-    ├── __init__.py  # Imports workforce to trigger @register_specialist decorators
+    ├── __init__.py  # Imports workforce and reconciliation to trigger @register_specialist decorators
     ├── classify.py  # LLM-based query classification
-    └── workforce.py # All six specialist implementations
+    ├── workforce.py # Six general-purpose specialists (Atlas, Vega, Nova, Aria, Orion, Luna)
+    └── reconciliation.py # Ledger specialist (Reconciliation Controller)
 ```
 
 ---

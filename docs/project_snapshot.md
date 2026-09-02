@@ -29,7 +29,7 @@
 
 ## 6. Current State (Working vs. Stubbed)
 - **Working End-to-End:** Synthetic data generation, date-aware deterministic pre-matching, Gemini-powered exception reasoning, F1 evaluation loop, organization-scoped DB persistence, Ledger Nexus routing, Echo history, and React dashboard UI.
-- **Stubbed / In-Progress:** Dynamic AI Facial UI (planned in `faceplan.md` using animations).
+- **Stubbed / In-Progress:** Dynamic AI Facial UI (planned for Phase 5 enhancement using animations).
 
 ## 7. Demo Flow
 1. **Landing:** User opens Dashboard view.

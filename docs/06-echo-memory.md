@@ -152,6 +152,8 @@ When Atlas delegates to Vega or Nova:
   ```
   This provides an audit trail but does not expose the internal delegation to the user's visible history.
 
+**Note:** Currently, only Atlas initiates delegation to other specialists. Ledger and other specialists do not participate in the delegation pattern; they handle user questions independently.
+
 ---
 
 ## Future: Embeddings & Vector Store
